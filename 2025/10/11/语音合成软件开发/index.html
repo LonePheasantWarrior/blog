@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="wxh">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set data attribute for CSS variables
+                root.setAttribute("data-theme", theme);
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes once DOM is ready
+            if (document.readyState !== "loading") {
+                document.body.classList.add(theme + "-mode");
+            } else {
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.body.classList.add(theme + "-mode");
+                    document.body.classList.remove((theme === DARK ? LIGHT : DARK) + "-mode");
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Critical CSS to prevent flash -->
+    <style>
+        :root[data-theme="dark"] {
+            --background-color: #202124;
+            --background-color-transparent: rgba(32, 33, 36, 0.6);
+            --second-background-color: #2d2e32;
+            --third-background-color: #34353a;
+            --third-background-color-transparent: rgba(32, 33, 36, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #ffffff;
+            --second-text-color: #eeeeee;
+            --third-text-color: #bebec6;
+            --fourth-text-color: #999999;
+            --default-text-color: #bebec6;
+            --invert-text-color: #373D3F;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(255, 255, 255, 0.08);
+            --shadow-color-2: rgba(255, 255, 255, 0.05);
+        }
+        
+        :root[data-theme="light"] {
+            --background-color: #fff;
+            --background-color-transparent: rgba(255, 255, 255, 0.6);
+            --second-background-color: #f8f8f8;
+            --third-background-color: #f2f2f2;
+            --third-background-color-transparent: rgba(241, 241, 241, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #16171a;
+            --second-text-color: #2f3037;
+            --third-text-color: #5e5e5e;
+            --fourth-text-color: #eeeeee;
+            --default-text-color: #373D3F;
+            --invert-text-color: #bebec6;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(0, 0, 0, 0.08);
+            --shadow-color-2: rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+        
+        /* Apply body classes as soon as DOM is ready */
+        :root[data-theme="dark"] body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+    </style>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+        
+        
+        
+            <link rel="preconnect" href="https://evan.beee.top" crossorigin>
+        
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://blog.private-cloud.site/2025/10/11/语音合成软件开发/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于AI的语音合成软件">
+<meta property="og:url" content="https://blog.private-cloud.site/2025/10/11/%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.private-cloud.site/images/redefine-og.webp">
+<meta property="article:published_time" content="2025-10-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-25T12:36:45.940Z">
+<meta property="article:author" content="wxh">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android Studio">
+<meta property="article:tag" content="Development">
+<meta property="article:tag" content="IT">
+<meta property="article:tag" content="Programming">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.private-cloud.site/images/redefine-og.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/favicon.webp" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.webp">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/favicon.webp">
+    <!--- Page Info-->
+    
+    <title>
+        
+            基于AI的语音合成软件 | 晓虎的博客
+        
+    </title>
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/Chillax/chillax.css">
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/css/build/tailwind.css">
+    
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/GeistMono/geist-mono.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/Geist/geist.css">
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/anime.min.js" ></script>
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"blog.private-cloud.site","root":"/","language":"zh-CN","path":"search.json"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":true,"custom_message":"欢迎访问我的小窝"},"side_tools":{"gear_rotation":true,"auto_expand":false},"open_graph":{"enable":true,"image":"/images/redefine-og.webp","description":"Hexo Theme Redefine, Redefine Your Hexo Journey."},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"static","image":{"light":"images/banner_light_wuxia.webp","dark":"images/banner_dark2.webp"},"title":"晓虎的博客","subtitle":{"text":["无限思考","无限进步","无限创造"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1"}},"version":"2.8.5","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}},"title":"欢迎访问我的小窝"},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2025/3/18 12:00:01"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/fontawesome.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/brands.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/solid.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/regular.min.css">
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.0.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        欢迎访问我的小窝
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/favicon.webp" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                晓虎的博客
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/archives"
+                        >
+                            <span>Archives</span>
+                            <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/tags"
+                        >
+                            <span>Tags</span>
+                            <i class="fa-regular fa-tags fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/categories"
+                        >
+                            <span>Categories</span>
+                            <i class="fa-regular fa-folder fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/essays"
+                        >
+                            <span>Essays</span>
+                            <i class="fa-regular fa-pen fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">43</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">20</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			
+			
+			<img src="/images/other/android-basics-kotlin.svg" alt="基于AI的语音合成软件" class="w-full h-60 sm:h-72 md:h-80 object-cover sm:rounded-t-large dark:brightness-75" />
+			
+			<div class="w-full flex items-center absolute bottom-0 justify-start">
+				<h1 class="article-title-cover text-center mx-6 my-6 text-second-text-color bg-background-color-transparent px-4 py-3 text-3xl sm:text-4xl md:text-5xl font-semibold backdrop-blur-lg rounded-xl border border-border-color ">基于AI的语音合成软件</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="/images/avatar.webp">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">wxh</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2025-10-11</span>
+        <span class="mobile">2025-10-11</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-03-25 20:36:45</span>
+            <span class="mobile">2026-03-25 20:36:45</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/IT/">IT</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Android/">Android</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Android-Studio/">Android Studio</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/IT/">IT</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Development/">Development</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Programming/">Programming</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>之前有想过开发一款基于在线基于大模型的文本转语音(TTS)的安卓应用,记得当时还是搞测试的哥们儿喜欢看小说我答应人家去写这么个应用来着.当时尝试开发着试了试虽然能发出声音但是线程控制,与Android系统交互这些细节做的是一塌糊涂,最终也没好意思把打包好的应用交出手.</p>
+<p>后来是家里我妈想要听书,实在是不想让我妈用什么<em>七猫</em>阅读软件(全是广告),当然是用<a class="link"   target="_blank" rel="noopener" href="https://github.com/gedoor/legado" >Legado &#x2F; 开源阅读<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a>阅读软件搭配我自己写的TTS软件<a class="link"   target="_blank" rel="noopener" href="https://github.com/LonePheasantWarrior/VolcengineTTS" >VolcengineTTS<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a>来达到最完美的听书体验啦XD</p>
+<p>说干就干</p>
+<h2 id="开发"><a href="#开发" class="headerlink" title="开发"></a>开发</h2><h3 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h3><h4 id="Gradle"><a href="#Gradle" class="headerlink" title="Gradle"></a>Gradle</h4><p>Gradle是一个现代化的 构建自动化工具 ，主要用于Java、Kotlin和Android项目的构建管理。</p>
+<h5 id="核心作用"><a href="#核心作用" class="headerlink" title="核心作用"></a>核心作用</h5><ul>
+<li><p><strong>构建项目</strong> - 把源代码编译成可运行的应用程序</p>
+</li>
+<li><p><strong>管理依赖</strong> - 自动下载和管理第三方库 打包发布 - 生成APK、JAR等发布文件</p>
+</li>
+</ul>
+<h5 id="Gradle和Maven的关系"><a href="#Gradle和Maven的关系" class="headerlink" title="Gradle和Maven的关系"></a>Gradle和Maven的关系</h5><h6 id="共享仓库标准"><a href="#共享仓库标准" class="headerlink" title="共享仓库标准"></a>共享仓库标准</h6><ul>
+<li>Maven仓库是行业标准 ：Maven Central、JCenter、Google Maven仓库等已经成为Java&#x2F;Kotlin生态的标准依赖仓库</li>
+<li>Gradle兼容Maven仓库 ：Gradle可以直接使用Maven仓库，无需额外配置</li>
+<li>统一的坐标系统 ：两者都使用 groupId:artifactId:version 的坐标格式</li>
+</ul>
+<h6 id="Gradle相比Maven的优势"><a href="#Gradle相比Maven的优势" class="headerlink" title="Gradle相比Maven的优势"></a>Gradle相比Maven的优势</h6><ol>
+<li><strong>构建性能</strong></li>
+</ol>
+<ul>
+<li>增量构建 ：Gradle只重新编译变化的部分</li>
+<li>构建缓存 ：可以缓存构建结果</li>
+<li>并行执行 ：支持并行任务执行</li>
+</ul>
+<ol start="2">
+<li><strong>灵活性</strong></li>
+</ol>
+<ul>
+<li>基于Groovy&#x2F;Kotlin DSL ：比Maven的XML更灵活</li>
+<li>插件系统 ：更强大的插件机制</li>
+<li>多项目构建 ：更好的多模块支持</li>
+</ul>
+<ol start="3">
+<li><strong>Android开发首选</strong></li>
+</ol>
+<ul>
+<li>官方支持 ：Google官方推荐用于Android开发</li>
+<li>Android插件 ：专门的Android Gradle插件</li>
+<li>Compose支持 ：更好的Jetpack Compose集成</li>
+</ul>
+<h4 id="AndroidX"><a href="#AndroidX" class="headerlink" title="AndroidX"></a>AndroidX</h4><p><a class="link"   target="_blank" rel="noopener" href="https://developer.android.google.cn/jetpack/androidx?hl=zh-cn" >AndroidX<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a> 是Android官方推出的新一代Android支持库，它取代了旧的<a class="link"   target="_blank" rel="noopener" href="https://developer.android.google.cn/topic/libraries/support-library/packages?hl=zh-cn" >Android Support Library<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a>。简单来说，AndroidX是Google为了统一和现代化Android开发而创建的官方库集合。</p>
+<h5 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h5><ul>
+<li>androidx.core.ktx - 提供Kotlin扩展函数，简化Android API使用</li>
+<li>androidx.activity.compose - 支持Compose的Activity组件</li>
+</ul>
+<h5 id="生命周期管理"><a href="#生命周期管理" class="headerlink" title="生命周期管理"></a>生命周期管理</h5><ul>
+<li>androidx.lifecycle.runtime.ktx - 生命周期管理</li>
+<li>androidx.lifecycle.viewmodel.ktx - ViewModel支持</li>
+<li>androidx.lifecycle.viewmodel.compose - Compose中的ViewModel集成</li>
+</ul>
+<h5 id="Jetpack-Compose（现代UI框架）"><a href="#Jetpack-Compose（现代UI框架）" class="headerlink" title="Jetpack Compose（现代UI框架）"></a>Jetpack Compose（现代UI框架）</h5><ul>
+<li>androidx.compose.bom - Compose物料清单，统一版本管理</li>
+<li>androidx.compose.ui - Compose UI核心</li>
+<li>androidx.compose.material3 - Material Design 3组件</li>
+<li>androidx.compose.material.icons.extended - 图标库</li>
+</ul>
+<h4 id="应用清单文件-Application-Manifest"><a href="#应用清单文件-Application-Manifest" class="headerlink" title="应用清单文件 (Application Manifest)"></a>应用清单文件 (Application Manifest)</h4><p>应用清单文件也被称为Manifest文件,是Android应用的核心配置文件。它就像是应用的”身份证”和”说明书”，告诉Android系统关于你应用的所有重要信息。</p>
+<h5 id="AndroidManifest-xml的作用"><a href="#AndroidManifest-xml的作用" class="headerlink" title="AndroidManifest.xml的作用"></a>AndroidManifest.xml的作用</h5><p>简单说，这个文件 <strong>定义了应用的基本信息和组件结构</strong> ，让Android系统知道：</p>
+<ol>
+<li>应用是什么 （包名、版本、图标等）</li>
+<li>应用能做什么 （需要的权限）</li>
+<li>应用包含什么 （Activity、Service等组件）</li>
+<li>应用如何启动 （主入口点）</li>
+</ol>
+<h5 id="为什么这个文件如此重要？"><a href="#为什么这个文件如此重要？" class="headerlink" title="为什么这个文件如此重要？"></a>为什么这个文件如此重要？</h5><ol>
+<li>系统识别 ：没有它，Android系统不知道你的应用存在</li>
+<li>权限控制 ：定义应用需要访问的系统资源</li>
+<li>组件注册 ：声明所有的Activity、Service等</li>
+<li>Intent过滤 ：定义应用能响应哪些系统事件</li>
+</ol>
+<h3 id="工程结构"><a href="#工程结构" class="headerlink" title="工程结构"></a>工程结构</h3><div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line">VolcengineTTS/</span><br><span class="line">├── .gitignore</span><br><span class="line">├── LICENSE</span><br><span class="line">├── README.md</span><br><span class="line">├── app/                                  # 应用模块</span><br><span class="line">│   ├── .gitignore</span><br><span class="line">│   ├── build.gradle.kts                 # 应用构建配置</span><br><span class="line">│   ├── proguard-rules.pro               # 代码混淆规则</span><br><span class="line">│   └── src/</span><br><span class="line">│       ├── androidTest/                 # Android测试代码</span><br><span class="line">│       │   └── java/</span><br><span class="line">│       ├── main/                        # 主代码目录</span><br><span class="line">│       │   ├── AndroidManifest.xml     # 应用清单文件</span><br><span class="line">│       │   ├── ic_launcher-playstore.png</span><br><span class="line">│       │   ├── java/                    # Java/Kotlin源代码</span><br><span class="line">│       │   │   └── com/github/lonepheasantwarrior/volcenginetts/</span><br><span class="line">│       │   │       ├── MainActivity.kt              # 主界面</span><br><span class="line">│       │   │       ├── TTSApplication.kt            # 应用类(主上下文)</span><br><span class="line">│       │   │       ├── common/                      # 通用工具类</span><br><span class="line">│       │   │       │   ├── Constants.java</span><br><span class="line">│       │   │       │   ├── LogTag.kt</span><br><span class="line">│       │   │       │   └── SettingsData.kt</span><br><span class="line">│       │   │       ├── engine/                     # TTS引擎相关</span><br><span class="line">│       │   │       │   ├── SynthesisEngine.kt</span><br><span class="line">│       │   │       │   └── SynthesisEngineListener.kt</span><br><span class="line">│       │   │       ├── function/                   # 功能模块</span><br><span class="line">│       │   │       │   ├── SettingsFunction.kt</span><br><span class="line">│       │   │       │   └── UpdateFunction.kt</span><br><span class="line">│       │   │       ├── tts/                       # TTS服务相关</span><br><span class="line">│       │   │       │   ├── CheckVoiceData.java</span><br><span class="line">│       │   │       │   ├── DownloadVoiceData.java</span><br><span class="line">│       │   │       │   ├── GetSampleText.java</span><br><span class="line">│       │   │       │   ├── TTSContext.java</span><br><span class="line">│       │   │       │   ├── TTSService.java</span><br><span class="line">│       │   │       │   └── TtsVoiceSample.java</span><br><span class="line">│       │   │       └── ui/                        # 用户界面</span><br><span class="line">│       │   │           ├── UpdateDialog.kt</span><br><span class="line">│       │   │           ├── WelcomeDialog.kt</span><br><span class="line">│       │   │           └── theme/                 # 主题相关</span><br><span class="line">│       │   │               ├── Color.kt</span><br><span class="line">│       │   │               ├── Theme.kt</span><br><span class="line">│       │   │               └── Type.kt</span><br><span class="line">│       │   └── res/                       # 资源文件</span><br><span class="line">│       │       ├── drawable/               # 可绘制资源</span><br><span class="line">│       │       │   ├── ic_launcher_background.xml</span><br><span class="line">│       │       │   └── ic_launcher_foreground.xml</span><br><span class="line">│       │       ├── google-play/            # Google Play资源</span><br><span class="line">│       │       │   ├── feature-graphic.png</span><br><span class="line">│       │       │   └── icon.png</span><br><span class="line">│       │       ├── mipmap-anydpi/          # 任意DPI图标</span><br><span class="line">│       │       ├── mipmap-anydpi-v26/      # API 26+图标</span><br><span class="line">│       │       │   ├── ic_launcher.xml</span><br><span class="line">│       │       │   └── ic_launcher_round.xml</span><br><span class="line">│       │       ├── mipmap-hdpi/            # 高DPI图标</span><br><span class="line">│       │       │   ├── ic_launcher.webp</span><br><span class="line">│       │       │   ├── ic_launcher_foreground.webp</span><br><span class="line">│       │       │   └── ic_launcher_round.webp</span><br><span class="line">│       │       ├── mipmap-ldpi/            # 低DPI图标</span><br><span class="line">│       │       ├── mipmap-mdpi/            # 中DPI图标</span><br><span class="line">│       │       │   ├── ic_launcher.webp</span><br><span class="line">│       │       │   ├── ic_launcher_foreground.webp</span><br><span class="line">│       │       │   └── ic_launcher_round.webp</span><br><span class="line">│       │       ├── mipmap-xhdpi/           # 超高DPI图标</span><br><span class="line">│       │       │   ├── ic_launcher.webp</span><br><span class="line">│       │       │   ├── ic_launcher_foreground.webp</span><br><span class="line">│       │       │   └── ic_launcher_round.webp</span><br><span class="line">│       │       ├── mipmap-xxhdpi/          # 超超高DPI图标</span><br><span class="line">│       │       │   ├── ic_launcher.webp</span><br><span class="line">│       │       │   ├── ic_launcher_foreground.webp</span><br><span class="line">│       │       │   └── ic_launcher_round.webp</span><br><span class="line">│       │       ├── mipmap-xxxhdpi/         # 超超超高DPI图标</span><br><span class="line">│       │       │   ├── ic_launcher.webp</span><br><span class="line">│       │       │   ├── ic_launcher_foreground.webp</span><br><span class="line">│       │       │   └── ic_launcher_round.webp</span><br><span class="line">│       │       ├── values/                 # 值资源</span><br><span class="line">│       │       │   ├── colors.xml          # 颜色定义</span><br><span class="line">│       │       │   ├── ic_launcher_background.xml</span><br><span class="line">│       │       │   ├── integers.xml        # 整数值</span><br><span class="line">│       │       │   ├── speaker_type.xml    # 扬声器类型</span><br><span class="line">│       │       │   ├── strings.xml         # 字符串资源</span><br><span class="line">│       │       │   └── themes.xml          # 主题定义</span><br><span class="line">│       │       └── xml/                    # XML配置文件</span><br><span class="line">│       │           ├── backup_rules.xml    # 备份规则</span><br><span class="line">│       │           ├── data_extraction_rules.xml</span><br><span class="line">│       │           └── tts_engine.xml       # TTS引擎配置</span><br><span class="line">│       └── test/                          # 单元测试</span><br><span class="line">│           └── java/</span><br><span class="line">├── build.gradle.kts                       # 项目构建配置</span><br><span class="line">├── gradle.properties                      # Gradle属性配置</span><br><span class="line">├── gradle/                                # Gradle配置目录</span><br><span class="line">│   ├── libs.versions.toml                 # 依赖版本管理</span><br><span class="line">│   └── wrapper/                           # Gradle包装器</span><br><span class="line">│       ├── gradle-wrapper.jar</span><br><span class="line">│       └── gradle-wrapper.properties</span><br><span class="line">├── gradlew                                # Linux/macOS Gradle脚本</span><br><span class="line">├── gradlew.bat                            # Windows Gradle脚本</span><br><span class="line">└── settings.gradle.kts                    # 项目设置配置</span><br></pre></td></tr></table></figure></div>
+
+<h4 id="工程依赖-构建配置"><a href="#工程依赖-构建配置" class="headerlink" title="工程依赖&#x2F;构建配置"></a>工程依赖&#x2F;构建配置</h4><h5 id="全局构建配置"><a href="#全局构建配置" class="headerlink" title="全局构建配置"></a>全局构建配置</h5><p>位于项目根目录&#x2F;<code>build.gradle.kts</code>.是项目级别的构建配置</p>
+<h6 id="主要功能："><a href="#主要功能：" class="headerlink" title="主要功能："></a>主要功能：</h6><ul>
+<li>插件声明 ：声明项目中使用的Gradle插件</li>
+<li>全局配置 ：定义所有模块共享的配置</li>
+<li>插件版本管理 ：统一管理插件版本</li>
+</ul>
+<h6 id="关键点："><a href="#关键点：" class="headerlink" title="关键点："></a>关键点：</h6><ul>
+<li>apply false ：表示插件在这里声明但不立即应用</li>
+<li>这些插件会在各个模块的build.gradle中具体应用</li>
+</ul>
+<h5 id="应用构建配置"><a href="#应用构建配置" class="headerlink" title="应用构建配置"></a>应用构建配置</h5><p>位于&#x2F;<code>app</code>&#x2F;<code>build.gradle.kts</code>.是应用模块的具体配置</p>
+<h6 id="插件配置"><a href="#插件配置" class="headerlink" title="插件配置"></a>插件配置</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">plugins &#123;</span><br><span class="line">    alias(libs.plugins.android.application)  <span class="comment">// Android应用插件</span></span><br><span class="line">    alias(libs.plugins.kotlin.android)       <span class="comment">// Kotlin Android支持</span></span><br><span class="line">    alias(libs.plugins.kotlin.compose)       <span class="comment">// Kotlin Compose支持</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="Android配置块-核心配置"><a href="#Android配置块-核心配置" class="headerlink" title="Android配置块 - 核心配置"></a>Android配置块 - 核心配置</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">    namespace = <span class="string">&quot;com.github.lonepheasantwarrior.volcenginetts&quot;</span></span><br><span class="line">    compileSdk = <span class="number">36</span>  <span class="comment">// 编译SDK版本</span></span><br><span class="line"></span><br><span class="line">    defaultConfig &#123;</span><br><span class="line">        applicationId = <span class="string">&quot;com.github.lonepheasantwarrior.volcenginetts&quot;</span></span><br><span class="line">        minSdk = <span class="number">31</span>    <span class="comment">// 最低支持Android版本</span></span><br><span class="line">        targetSdk = <span class="number">36</span> <span class="comment">// 目标SDK版本</span></span><br><span class="line">        versionCode = <span class="number">10007</span>  <span class="comment">// 内部版本号</span></span><br><span class="line">        versionName = <span class="string">&quot;1.0.7&quot;</span> <span class="comment">// 用户可见版本号</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="构建类型配置"><a href="#构建类型配置" class="headerlink" title="构建类型配置"></a>构建类型配置</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">buildTypes &#123;</span><br><span class="line">    release &#123;</span><br><span class="line">        isMinifyEnabled = <span class="literal">false</span>  <span class="comment">// 发布版本不启用代码混淆</span></span><br><span class="line">        proguardFiles(...)       <span class="comment">// 混淆规则文件</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="编译选项"><a href="#编译选项" class="headerlink" title="编译选项"></a>编译选项</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">compileOptions &#123;</span><br><span class="line">    sourceCompatibility = JavaVersion.VERSION_21</span><br><span class="line">    targetCompatibility = JavaVersion.VERSION_21</span><br><span class="line">&#125;</span><br><span class="line">kotlin &#123;</span><br><span class="line">    compilerOptions &#123;</span><br><span class="line">        jvmTarget.<span class="keyword">set</span>(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="构建特性"><a href="#构建特性" class="headerlink" title="构建特性"></a>构建特性</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">buildFeatures &#123;</span><br><span class="line">    compose = <span class="literal">true</span>  <span class="comment">// 启用Jetpack Compose</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="依赖管理-最重要的部分"><a href="#依赖管理-最重要的部分" class="headerlink" title="依赖管理 - 最重要的部分"></a>依赖管理 - 最重要的部分</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">    <span class="comment">// AndroidX核心库</span></span><br><span class="line">    implementation(libs.androidx.core.ktx)</span><br><span class="line">    implementation(libs.androidx.lifecycle.runtime.ktx)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Jetpack Compose相关</span></span><br><span class="line">    implementation(libs.androidx.activity.compose)</span><br><span class="line">    implementation(libs.androidx.compose.ui)</span><br><span class="line">    implementation(libs.androidx.compose.material3)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 火山引擎TTS</span></span><br><span class="line">    implementation(libs.speechengine.tob)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 网络请求</span></span><br><span class="line">    implementation(libs.okhttp)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 测试依赖</span></span><br><span class="line">    testImplementation(libs.junit)</span><br><span class="line">    androidTestImplementation(libs.androidx.junit)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h5 id="全局构建配置和应用构建配置的关系"><a href="#全局构建配置和应用构建配置的关系" class="headerlink" title="全局构建配置和应用构建配置的关系"></a>全局构建配置和应用构建配置的关系</h5><ul>
+<li>根目录<code>build.gradle.kts</code> ：管插件（用什么工具）</li>
+<li>应用模块<code>build.gradle.kts</code> ：管配置（怎么用工具）</li>
+</ul>
+<h5 id="版本目录（Version-Catalog）"><a href="#版本目录（Version-Catalog）" class="headerlink" title="版本目录（Version Catalog）"></a>版本目录（Version Catalog）</h5><blockquote>
+<p>Gradle 7.0+引入的重要特性</p>
+</blockquote>
+<p>版本目录配置位于&#x2F;<code>gradle</code>&#x2F;<code>libs.versions.toml</code>.是现代Gradle项目中 <strong>必不可少的核心配置文件</strong></p>
+<h6 id="libs-versions-toml-的作用"><a href="#libs-versions-toml-的作用" class="headerlink" title="libs.versions.toml 的作用"></a>libs.versions.toml 的作用</h6><p>简单说，这个文件是 依赖和插件的集中管理中心 ，就像项目的”依赖字典”</p>
+<h6 id="versions-部分-版本定义"><a href="#versions-部分-版本定义" class="headerlink" title="[versions] 部分 - 版本定义"></a>[versions] 部分 - 版本定义</h6><blockquote>
+<p>这里定义了所有依赖的 版本号 ，统一管理，避免版本冲突</p>
+</blockquote>
+<div class="code-container" data-rel="Toml"><figure class="iseeu highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[versions]</span></span><br><span class="line"><span class="attr">agp</span> = <span class="string">&quot;8.13.0&quot;</span>                    <span class="comment"># Android Gradle Plugin版本</span></span><br><span class="line"><span class="attr">kotlin</span> = <span class="string">&quot;2.2.20&quot;</span>                 <span class="comment"># Kotlin版本</span></span><br><span class="line"><span class="attr">coreKtx</span> = <span class="string">&quot;1.17.0&quot;</span>                <span class="comment"># AndroidX Core KTX版本</span></span><br><span class="line"><span class="attr">speechengine_tob</span> = <span class="string">&quot;5.4.8&quot;</span>        <span class="comment"># 火山引擎TTS版本</span></span><br></pre></td></tr></table></figure></div>
+
+<h6 id="libraries-部分-库依赖定义"><a href="#libraries-部分-库依赖定义" class="headerlink" title="[libraries] 部分 - 库依赖定义"></a>[libraries] 部分 - 库依赖定义</h6><blockquote>
+<p>这里定义了具体的 库依赖 ，通过 version.ref 引用[versions]中定义的版本</p>
+</blockquote>
+<div class="code-container" data-rel="Toml"><figure class="iseeu highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[libraries]</span></span><br><span class="line"><span class="attr">androidx-core-ktx</span> = &#123; group = <span class="string">&quot;androidx.core&quot;</span>, name = <span class="string">&quot;core-ktx&quot;</span>, version.ref = <span class="string">&quot;coreKtx&quot;</span> &#125;</span><br><span class="line"><span class="attr">speechengine_tob</span> = &#123; module = <span class="string">&quot;com.bytedance.speechengine:speechengine_tts_tob&quot;</span>, version.ref = <span class="string">&quot;speechengine_tob&quot;</span>&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="plugins-部分-插件定义"><a href="#plugins-部分-插件定义" class="headerlink" title="[plugins] 部分 - 插件定义"></a>[plugins] 部分 - 插件定义</h6><blockquote>
+<p>这里定义了 Gradle插件 及其版本</p>
+</blockquote>
+<div class="code-container" data-rel="Toml"><figure class="iseeu highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[plugins]</span></span><br><span class="line"><span class="attr">android-application</span> = &#123; id = <span class="string">&quot;com.android.application&quot;</span>, version.ref = <span class="string">&quot;agp&quot;</span> &#125;</span><br><span class="line"><span class="attr">kotlin-android</span> = &#123; id = <span class="string">&quot;org.jetbrains.kotlin.android&quot;</span>, version.ref = <span class="string">&quot;kotlin&quot;</span> &#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="功能实现"><a href="#功能实现" class="headerlink" title="功能实现"></a>功能实现</h3><h4 id="主界面-MainActivity-kt"><a href="#主界面-MainActivity-kt" class="headerlink" title="主界面 MainActivity.kt"></a>主界面 MainActivity.kt</h4><p>是<strong>用户与TTS引擎交互的主要界面</strong>，职能如下：</p>
+<ol>
+<li><p><strong>配置火山引擎TTS</strong>：让用户输入必要的认证信息</p>
+</li>
+<li><p><strong>声音参数设置</strong>：选择场景、声音类型、情感模式</p>
+</li>
+<li><p><strong>实时演示</strong>：提供声音预览功能</p>
+</li>
+<li><p><strong>设置持久化</strong>：保存用户偏好设置</p>
+</li>
+</ol>
+<h5 id="文件概述"><a href="#文件概述" class="headerlink" title="文件概述"></a>文件概述</h5><p>这个文件采用了<strong>现代Android开发架构</strong>，结合了：</p>
+<ul>
+<li><strong>Jetpack Compose</strong> - 声明式UI框架</li>
+<li><strong>MVVM模式</strong> - 模型-视图-视图模型架构</li>
+<li><strong>响应式编程</strong> - 基于状态驱动的UI更新</li>
+</ul>
+<h5 id="主要组件"><a href="#主要组件" class="headerlink" title="主要组件"></a>主要组件</h5><h6 id="1-MainActivity类-主活动控制器"><a href="#1-MainActivity类-主活动控制器" class="headerlink" title="1. MainActivity类 - 主活动控制器"></a>1. <strong>MainActivity类</strong> - 主活动控制器</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MainActivity</span> : <span class="type">ComponentActivity</span>() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> synthesisEngine: SynthesisEngine <span class="keyword">get</span>() = (applicationContext <span class="keyword">as</span> TTSApplication).</span><br><span class="line">    synthesisEngine</span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">val</span> settingsFunction: SettingsFunction <span class="keyword">get</span>() = (applicationContext <span class="keyword">as</span> </span><br><span class="line">    TTSApplication).settingsFunction</span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">val</span> updateFunction: UpdateFunction <span class="keyword">by</span> lazy &#123; UpdateFunction(<span class="keyword">this</span>) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>主要职责：</p>
+<ul>
+<li>管理应用生命周期（onCreate, onDestroy）</li>
+<li>持有核心业务组件（TTS引擎、设置功能、更新功能）</li>
+<li>处理应用更新检查</li>
+</ul>
+<h6 id="2-VolcengineTTSViewModel类-视图模型"><a href="#2-VolcengineTTSViewModel类-视图模型" class="headerlink" title="2. VolcengineTTSViewModel类 - 视图模型"></a>2. <strong>VolcengineTTSViewModel类</strong> - 视图模型</h6><p>这是<strong>业务逻辑的核心</strong>，负责：</p>
+<ul>
+<li><strong>状态管理</strong>：管理所有UI状态（App ID、Token、声音选择等）</li>
+<li><strong>数据持久化</strong>：保存和加载用户设置</li>
+<li><strong>业务逻辑</strong>：验证设置、播放演示声音等</li>
+</ul>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">VolcengineTTSViewModel</span>(application: Application) : AndroidViewModel(application) &#123;</span><br><span class="line">    <span class="comment">// 应用配置状态</span></span><br><span class="line">    <span class="keyword">var</span> appId <span class="keyword">by</span> mutableStateOf(<span class="string">&quot;&quot;</span>)</span><br><span class="line">    <span class="keyword">var</span> token <span class="keyword">by</span> mutableStateOf(<span class="string">&quot;&quot;</span>)</span><br><span class="line">    <span class="keyword">var</span> serviceCluster <span class="keyword">by</span> mutableStateOf(Constants.DEFAULT_SERVICE_CLUSTER)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 业务方法</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">saveSettings</span><span class="params">()</span></span> &#123; ... &#125;</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">playSampleVoice</span><span class="params">()</span></span> &#123; ... &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="3-UI组件-Compose函数"><a href="#3-UI组件-Compose函数" class="headerlink" title="3. UI组件 - Compose函数"></a>3. <strong>UI组件</strong> - Compose函数</h6><p>文件包含多个Composable函数，构建用户界面：</p>
+<p><strong>主界面函数</strong></p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">VolcengineTTSUI</span><span class="params">(modifier: <span class="type">Modifier</span> = Modifier)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 使用ViewModel管理状态</span></span><br><span class="line">    <span class="keyword">val</span> viewModel: VolcengineTTSViewModel = viewModel(...)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 构建UI布局</span></span><br><span class="line">    LazyColumn &#123;</span><br><span class="line">        item &#123; TTSBasicConfigurationInputs(...) &#125;    <span class="comment">// 基础配置输入</span></span><br><span class="line">        item &#123; TTSVoiceConfigurationInputs(...) &#125;     <span class="comment">// 声音配置输入  </span></span><br><span class="line">        item &#123; TTSSaveSettingsButton(...) &#125;          <span class="comment">// 保存按钮</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>配置输入组件</p>
+<ul>
+<li>TTSBasicConfigurationInputs：处理App ID、Token、Service Cluster输入</li>
+<li>TTSVoiceConfigurationInputs：处理场景选择、声音选择、情感开关</li>
+</ul>
+<h5 id="核心功能实现"><a href="#核心功能实现" class="headerlink" title="核心功能实现"></a>核心功能实现</h5><h6 id="1-配置管理"><a href="#1-配置管理" class="headerlink" title="1. 配置管理"></a>1. <strong>配置管理</strong></h6><ul>
+<li><strong>实时验证</strong>：输入时即时验证数据有效性</li>
+<li><strong>错误提示</strong>：通过颜色变化和提示文本显示错误</li>
+<li><strong>自动保存</strong>：用户修改后自动保存到持久化存储</li>
+</ul>
+<h6 id="2-声音选择系统"><a href="#2-声音选择系统" class="headerlink" title="2. 声音选择系统"></a>2. <strong>声音选择系统</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">filterSpeakersByScene</span><span class="params">(scene: <span class="type">String</span>)</span></span>: List&lt;SpeakerInfo&gt; &#123;</span><br><span class="line">    <span class="keyword">return</span> getSpeakerList()</span><br><span class="line">        .map &#123; it.split(<span class="string">&quot;|&quot;</span>) &#125;</span><br><span class="line">        .filter &#123; it.size &gt;= <span class="number">3</span> &amp;&amp; it[<span class="number">0</span>] == scene &#125;</span><br><span class="line">        .map &#123; SpeakerInfo(name = it[<span class="number">1</span>], id = it[<span class="number">2</span>]) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>工作流程：</p>
+<ol>
+<li><p>用户选择场景（如”通用”、”客服”等）</p>
+</li>
+<li><p>动态过滤可用的声音列表</p>
+</li>
+<li><p>用户选择具体声音后自动播放演示</p>
+</li>
+</ol>
+<h6 id="3-演示播放功能"><a href="#3-演示播放功能" class="headerlink" title="3. 演示播放功能"></a>3. <strong>演示播放功能</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">playSampleVoice</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> sampleText = TtsVoiceSample.getByLocate(getApplication(), Locale.getDefault())</span><br><span class="line">    synthesisEngine.create(appId, token, selectedSpeakerId, serviceCluster, isEmotional)</span><br><span class="line">    synthesisEngine.startEngine(sampleText, <span class="literal">null</span>, <span class="literal">null</span>, <span class="literal">null</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h4 id="应用类-TTSApplication-kt"><a href="#应用类-TTSApplication-kt" class="headerlink" title="应用类 TTSApplication.kt"></a>应用类 TTSApplication.kt</h4><p>是<strong>整个TTS应用的全局上下文和初始化入口</strong>，职能如下：</p>
+<ol>
+<li><strong>全局初始化</strong>：负责应用启动时的核心组件初始化</li>
+<li><strong>生命周期管理</strong>：管理应用级别的生命周期事件</li>
+<li><strong>组件持有</strong>：作为全局容器持有核心业务组件</li>
+<li><strong>环境准备</strong>：初始化火山引擎TTS SDK运行环境</li>
+</ol>
+<h5 id="文件概述-1"><a href="#文件概述-1" class="headerlink" title="文件概述"></a>文件概述</h5><p>这个文件是Android应用的<strong>Application类</strong>，继承自<code>android.app.Application</code>，是应用的<strong>单例全局上下文</strong>，在整个应用生命周期中只存在一个实例。</p>
+<h5 id="主要组件-1"><a href="#主要组件-1" class="headerlink" title="主要组件"></a>主要组件</h5><h6 id="1-TTSApplication类-应用全局控制器"><a href="#1-TTSApplication类-应用全局控制器" class="headerlink" title="1. TTSApplication类 - 应用全局控制器"></a>1. <strong>TTSApplication类</strong> - 应用全局控制器</h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TTSApplication</span>: <span class="type">Application</span>() &#123;</span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> synthesisEngine: SynthesisEngine <span class="keyword">private</span> <span class="keyword">set</span></span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> synthesisEngineListener: SynthesisEngineListener <span class="keyword">private</span> <span class="keyword">set</span></span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> settingsFunction: SettingsFunction <span class="keyword">private</span> <span class="keyword">set</span></span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> ttsContext: TTSContext <span class="keyword">private</span> <span class="keyword">set</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate()</span><br><span class="line">        <span class="comment">// 初始化火山引擎语音合成环境</span></span><br><span class="line">        <span class="comment">// 在Application创建时调用，确保整个应用生命周期内只执行一次</span></span><br><span class="line">        SpeechEngineGenerator.PrepareEnvironment(applicationContext, <span class="keyword">this</span>)</span><br><span class="line">        Log.d(LogTag.SDK_INFO, <span class="string">&quot;火山引擎语音合成环境初始化完成&quot;</span>)</span><br><span class="line"></span><br><span class="line">        synthesisEngine = SynthesisEngine(<span class="keyword">this</span>)</span><br><span class="line">        synthesisEngineListener = SynthesisEngineListener(<span class="keyword">this</span>)</span><br><span class="line">        settingsFunction = SettingsFunction(<span class="keyword">this</span>)</span><br><span class="line">        ttsContext = TTSContext()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>主要职责：</p>
+<ul>
+<li><strong>环境初始化</strong>：调用<code>SpeechEngineGenerator.PrepareEnvironment()</code>准备火山引擎TTS SDK运行环境</li>
+<li><strong>组件创建</strong>：创建并持有四个核心业务组件</li>
+<li><strong>生命周期管理</strong>：在<code>onCreate()</code>中执行一次性初始化操作</li>
+</ul>
+<h5 id="核心功能实现-1"><a href="#核心功能实现-1" class="headerlink" title="核心功能实现"></a>核心功能实现</h5><h6 id="1-火山引擎TTS环境初始化"><a href="#1-火山引擎TTS环境初始化" class="headerlink" title="1. 火山引擎TTS环境初始化"></a>1. <strong>火山引擎TTS环境初始化</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">SpeechEngineGenerator.PrepareEnvironment(applicationContext, <span class="keyword">this</span>)</span><br><span class="line">Log.d(LogTag.SDK_INFO, <span class="string">&quot;火山引擎语音合成环境初始化完成&quot;</span>)</span><br></pre></td></tr></table></figure></div>
+
+<p>关键特性：</p>
+<ul>
+<li><strong>一次性执行</strong>：确保在整个应用生命周期内只执行一次</li>
+<li><strong>环境准备</strong>：为火山引擎TTS SDK提供必要的运行环境</li>
+<li><strong>日志记录</strong>：通过LogTag.SDK_INFO记录初始化完成状态</li>
+</ul>
+<h6 id="2-核心业务组件初始化"><a href="#2-核心业务组件初始化" class="headerlink" title="2. 核心业务组件初始化"></a>2. <strong>核心业务组件初始化</strong></h6><p>TTSApplication持有四个核心业务组件，通过<code>lateinit</code>关键字延迟初始化：</p>
+<ul>
+<li><strong>synthesisEngine</strong>：语音合成引擎，负责TTS核心功能</li>
+<li><strong>synthesisEngineListener</strong>：合成引擎监听器，处理合成事件</li>
+<li><strong>settingsFunction</strong>：设置功能模块，管理用户配置</li>
+<li><strong>ttsContext</strong>：TTS上下文，提供运行时数据</li>
+</ul>
+<h6 id="3-全局访问机制"><a href="#3-全局访问机制" class="headerlink" title="3. 全局访问机制"></a>3. <strong>全局访问机制</strong></h6><p>其他组件可以通过ApplicationContext访问这些核心组件：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在Activity中访问</span></span><br><span class="line"><span class="keyword">val</span> synthesisEngine = (applicationContext <span class="keyword">as</span> TTSApplication).synthesisEngine</span><br><span class="line"><span class="keyword">val</span> settingsFunction = (applicationContext <span class="keyword">as</span> TTSApplication).settingsFunction</span><br></pre></td></tr></table></figure></div>
+
+<h5 id="设计模式与架构"><a href="#设计模式与架构" class="headerlink" title="设计模式与架构"></a>设计模式与架构</h5><h6 id="1-单例模式"><a href="#1-单例模式" class="headerlink" title="1. 单例模式"></a>1. <strong>单例模式</strong></h6><ul>
+<li>Application类在Android系统中是单例的</li>
+<li>确保全局状态的一致性</li>
+<li>避免重复初始化和资源浪费</li>
+</ul>
+<h6 id="2-依赖注入容器"><a href="#2-依赖注入容器" class="headerlink" title="2. 依赖注入容器"></a>2. <strong>依赖注入容器</strong></h6><ul>
+<li>作为全局的依赖注入容器</li>
+<li>提供统一的组件访问接口</li>
+<li>简化组件间的依赖关系管理</li>
+</ul>
+<h6 id="3-生命周期感知"><a href="#3-生命周期感知" class="headerlink" title="3. 生命周期感知"></a>3. <strong>生命周期感知</strong></h6><ul>
+<li>在正确的时机执行初始化操作</li>
+<li>管理应用级别的资源生命周期</li>
+<li>确保组件在需要时可用</li>
+</ul>
+<h5 id="在AndroidManifest-xml中的配置"><a href="#在AndroidManifest-xml中的配置" class="headerlink" title="在AndroidManifest.xml中的配置"></a>在AndroidManifest.xml中的配置</h5><p>TTSApplication需要在AndroidManifest.xml中声明：</p>
+<div class="code-container" data-rel="Xml"><figure class="iseeu highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">application</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:name</span>=<span class="string">&quot;.TTSApplication&quot;</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:theme</span>=<span class="string">&quot;@style/Theme.VolcengineTTS&quot;</span></span></span><br><span class="line"><span class="tag">    <span class="attr">...</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>通过<code>android:name</code>属性指定自定义的Application类，确保系统在应用启动时创建TTSApplication实例。</p>
+<h4 id="设置功能类-SettingsFunction-kt"><a href="#设置功能类-SettingsFunction-kt" class="headerlink" title="设置功能类 SettingsFunction.kt"></a>设置功能类 SettingsFunction.kt</h4><p>是<strong>用户配置数据的管理器</strong>，负责TTS应用设置信息的持久化存储和读取。</p>
+<h5 id="文件概述-2"><a href="#文件概述-2" class="headerlink" title="文件概述"></a>文件概述</h5><p>这个类封装了Android的SharedPreferences功能，提供简洁的API来管理应用的配置数据。</p>
+<h5 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h5><h6 id="1-配置保存"><a href="#1-配置保存" class="headerlink" title="1. 配置保存"></a>1. <strong>配置保存</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">saveSettings</span><span class="params">(appId: <span class="type">String</span>, token: <span class="type">String</span>, selectedSpeakerId: <span class="type">String</span>, serviceCluster: <span class="type">String</span>, isEmotional: <span class="type">Boolean</span> = <span class="literal">false</span>)</span></span></span><br></pre></td></tr></table></figure></div>
+
+<p>保存火山引擎TTS的核心配置参数：</p>
+<ul>
+<li>App ID和Token（认证信息）</li>
+<li>选中的声音ID</li>
+<li>服务集群地址</li>
+<li>情感朗读开关状态</li>
+</ul>
+<h6 id="2-配置读取"><a href="#2-配置读取" class="headerlink" title="2. 配置读取"></a>2. <strong>配置读取</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">getSettings</span><span class="params">()</span></span>: SettingsData</span><br></pre></td></tr></table></figure></div>
+
+<p>读取已保存的配置，返回包含所有设置数据的SettingsData对象。</p>
+<h6 id="3-欢迎弹窗控制"><a href="#3-欢迎弹窗控制" class="headerlink" title="3. 欢迎弹窗控制"></a>3. <strong>欢迎弹窗控制</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">shouldShowWelcomeDialog</span><span class="params">()</span></span>: <span class="built_in">Boolean</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">setShowWelcomeDialog</span><span class="params">(show: <span class="type">Boolean</span>)</span></span></span><br></pre></td></tr></table></figure></div>
+
+<p>管理首次启动时的欢迎弹窗显示逻辑。</p>
+<h5 id="技术实现"><a href="#技术实现" class="headerlink" title="技术实现"></a>技术实现</h5><ul>
+<li><strong>SharedPreferences存储</strong>：使用Android原生数据持久化方案</li>
+<li><strong>主线程安全</strong>：通过Handler确保UI操作在主线程执行</li>
+<li><strong>日志记录</strong>：关键操作记录日志便于调试</li>
+<li><strong>用户反馈</strong>：保存成功后显示Toast提示</li>
+</ul>
+<h5 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h5><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 保存设置</span></span><br><span class="line">settingsFunction.saveSettings(<span class="string">&quot;your_app_id&quot;</span>, <span class="string">&quot;your_token&quot;</span>, <span class="string">&quot;speaker_001&quot;</span>, <span class="string">&quot;cluster_name&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读取设置</span></span><br><span class="line"><span class="keyword">val</span> settings = settingsFunction.getSettings()</span><br><span class="line"><span class="keyword">val</span> appId = settings.appId</span><br></pre></td></tr></table></figure></div>
+
+<h4 id="合成引擎类-SynthesisEngine-kt"><a href="#合成引擎类-SynthesisEngine-kt" class="headerlink" title="合成引擎类 SynthesisEngine.kt"></a>合成引擎类 SynthesisEngine.kt</h4><p>是<strong>火山引擎语音合成SDK的核心封装类</strong>，负责语音合成引擎的创建、配置、启动和销毁。</p>
+<h5 id="文件概述-3"><a href="#文件概述-3" class="headerlink" title="文件概述"></a>文件概述</h5><p>这个类封装了火山引擎TTS SDK的复杂API，提供简洁的接口来管理语音合成引擎的生命周期。</p>
+<h5 id="核心功能"><a href="#核心功能" class="headerlink" title="核心功能"></a>核心功能</h5><h6 id="1-引擎生命周期管理"><a href="#1-引擎生命周期管理" class="headerlink" title="1. 引擎生命周期管理"></a>1. <strong>引擎生命周期管理</strong></h6><ul>
+<li><strong>创建引擎</strong>：通过<code>create()</code>方法创建语音合成引擎实例</li>
+<li><strong>初始化配置</strong>：设置火山引擎TTS的各项参数</li>
+<li><strong>启动引擎</strong>：启动合成引擎并设置监听器</li>
+<li><strong>销毁引擎</strong>：清理资源并重置状态</li>
+</ul>
+<h6 id="2-参数配置系统"><a href="#2-参数配置系统" class="headerlink" title="2. 参数配置系统"></a>2. <strong>参数配置系统</strong></h6><ul>
+<li><strong>认证参数</strong>：appId、token、speakerId、serviceCluster</li>
+<li><strong>合成参数</strong>：语速、音量、音高、情感预测</li>
+<li><strong>技术参数</strong>：采样率、工作模式、音频流类型</li>
+<li><strong>调试参数</strong>：User ID、Device ID用于问题定位</li>
+</ul>
+<h6 id="3-合成控制"><a href="#3-合成控制" class="headerlink" title="3. 合成控制"></a>3. <strong>合成控制</strong></h6><ul>
+<li><strong>文本合成</strong>：支持最多80个字符的文本合成</li>
+<li><strong>参数调整</strong>：实时调整语速、音量、音高参数</li>
+<li><strong>状态管理</strong>：维护引擎创建状态和参数设置状态</li>
+</ul>
+<h5 id="关键技术实现"><a href="#关键技术实现" class="headerlink" title="关键技术实现"></a>关键技术实现</h5><h6 id="1-引擎创建与配置"><a href="#1-引擎创建与配置" class="headerlink" title="1. 引擎创建与配置"></a>1. <strong>引擎创建与配置</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">create</span><span class="params">(appId: <span class="type">String</span>, token: <span class="type">String</span>, speakerId: <span class="type">String</span>, serviceCluster: <span class="type">String</span>, isEmotional: <span class="type">Boolean</span>)</span></span>: SpeechEngine &#123;</span><br><span class="line">    <span class="keyword">if</span> (mSpeechEngine != <span class="literal">null</span>) &#123;</span><br><span class="line">        destroy()</span><br><span class="line">    &#125;</span><br><span class="line">    mSpeechEngine = SpeechEngineGenerator.getInstance()</span><br><span class="line">    mSpeechEngine!!.createEngine()</span><br><span class="line">    setEngineParams(appId, token, speakerId, serviceCluster, isEmotional)</span><br><span class="line">    <span class="keyword">return</span> mSpeechEngine!!</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="2-核心参数设置"><a href="#2-核心参数设置" class="headerlink" title="2. 核心参数设置"></a>2. <strong>核心参数设置</strong></h6><ul>
+<li><strong>工作模式</strong>：设置为在线合成模式（TTS_WORK_MODE_ONLINE）</li>
+<li><strong>音频采样率</strong>：从资源文件中读取配置（默认24000Hz）</li>
+<li><strong>服务地址</strong>：配置火山引擎TTS服务端点和API路径</li>
+<li><strong>音色选择</strong>：设置在线合成使用的音色代号</li>
+<li><strong>情感预测</strong>：可选启用情感预测功能</li>
+</ul>
+<h6 id="3-合成启动流程"><a href="#3-合成启动流程" class="headerlink" title="3. 合成启动流程"></a>3. <strong>合成启动流程</strong></h6><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">startEngine</span><span class="params">(text: <span class="type">CharSequence</span>?, speedRatio: <span class="type">Int</span>?, volumeRatio: <span class="type">Int</span>?, pitchRatio: <span class="type">Int</span>?)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 1. 初始化引擎</span></span><br><span class="line">    <span class="keyword">val</span> ret = mSpeechEngine!!.initEngine()</span><br><span class="line">    <span class="comment">// 2. 设置监听器</span></span><br><span class="line">    mSpeechEngine!!.setListener(synthesisEngineListener)</span><br><span class="line">    <span class="comment">// 3. 同步停止前一次请求</span></span><br><span class="line">    mSpeechEngine!!.sendDirective(SpeechEngineDefines.DIRECTIVE_SYNC_STOP_ENGINE, <span class="string">&quot;&quot;</span>)</span><br><span class="line">    <span class="comment">// 4. 设置TTS参数</span></span><br><span class="line">    setTTSParams(text, speedRatio, volumeRatio, pitchRatio)</span><br><span class="line">    <span class="comment">// 5. 启动引擎</span></span><br><span class="line">    mSpeechEngine!!.sendDirective(SpeechEngineDefines.DIRECTIVE_START_ENGINE, <span class="string">&quot;&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="4-参数验证与安全"><a href="#4-参数验证与安全" class="headerlink" title="4. 参数验证与安全"></a>4. <strong>参数验证与安全</strong></h6><ul>
+<li><strong>文本长度限制</strong>：单次合成文本不得超过80字</li>
+<li><strong>参数范围控制</strong>：语速、音量、音高参数按比例缩放</li>
+<li><strong>错误处理</strong>：完善的异常捕获和用户提示</li>
+<li><strong>状态重置</strong>：引擎销毁时重置所有状态标志</li>
+</ul>
+<h5 id="与SynthesisEngineListener-kt的协作"><a href="#与SynthesisEngineListener-kt的协作" class="headerlink" title="与SynthesisEngineListener.kt的协作"></a>与SynthesisEngineListener.kt的协作</h5><p><code>SynthesisEngine.kt</code>与<code>SynthesisEngineListener.kt</code>紧密协作，形成完整的语音合成控制链：</p>
+<ol>
+<li><strong>引擎设置监听器</strong>：<code>SynthesisEngine</code>将<code>SynthesisEngineListener</code>设置为引擎回调监听器</li>
+<li><strong>状态同步</strong>：通过TTSContext共享引擎状态信息</li>
+<li><strong>事件处理</strong>：<code>SynthesisEngineListener</code>处理引擎的各种状态通知</li>
+<li><strong>错误处理</strong>：监听器捕获引擎错误并通知主线程</li>
+</ol>
+<h5 id="设计特点"><a href="#设计特点" class="headerlink" title="设计特点"></a>设计特点</h5><h6 id="1-封装性"><a href="#1-封装性" class="headerlink" title="1. 封装性"></a>1. <strong>封装性</strong></h6><ul>
+<li>将复杂的火山引擎SDK API封装为简洁的接口</li>
+<li>隐藏底层实现细节，提供高层抽象</li>
+</ul>
+<h6 id="2-状态管理"><a href="#2-状态管理" class="headerlink" title="2. 状态管理"></a>2. <strong>状态管理</strong></h6><ul>
+<li>维护引擎创建状态（isCreated）</li>
+<li>跟踪参数设置状态（isParametersBeenSet）</li>
+<li>确保操作的正确顺序</li>
+</ul>
+<h6 id="3-线程安全"><a href="#3-线程安全" class="headerlink" title="3. 线程安全"></a>3. <strong>线程安全</strong></h6><ul>
+<li>使用Handler确保UI操作在主线程执行</li>
+<li>避免多线程环境下的竞态条件</li>
+</ul>
+<h6 id="4-资源管理"><a href="#4-资源管理" class="headerlink" title="4. 资源管理"></a>4. <strong>资源管理</strong></h6><ul>
+<li>提供完整的生命周期管理</li>
+<li>确保引擎资源的正确释放</li>
+</ul>
+<h5 id="使用示例-1"><a href="#使用示例-1" class="headerlink" title="使用示例"></a>使用示例</h5><div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> synthesisEngine = SynthesisEngine(context)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 创建引擎</span></span><br><span class="line"><span class="keyword">val</span> engine = synthesisEngine.create(appId, token, speakerId, serviceCluster, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 启动合成</span></span><br><span class="line">synthesisEngine.startEngine(<span class="string">&quot;欢迎使用火山引擎TTS&quot;</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="number">100</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 销毁引擎（使用完毕后）</span></span><br><span class="line">synthesisEngine.destroy()</span><br></pre></td></tr></table></figure></div>
+
+<p><code>SynthesisEngine.kt</code>是整个TTS应用的技术核心，它成功地将复杂的语音合成技术封装为易于使用的接口，为上层应用提供了稳定可靠的语音合成能力。</p>
+<h4 id="TTSService-java"><a href="#TTSService-java" class="headerlink" title="TTSService.java"></a>TTSService.java</h4><h5 id="文件概述-4"><a href="#文件概述-4" class="headerlink" title="文件概述"></a>文件概述</h5><ul>
+<li><strong>文件路径</strong> <code>/app/src/main/java/com/github/lonepheasantwarrior/volcenginetts/tts/TTSService.java</code></li>
+<li><strong>类名</strong>: <code>TTSService</code></li>
+<li><strong>继承</strong>: <code>TextToSpeechService</code></li>
+<li><strong>功能</strong>: 系统级TTS服务的核心实现，负责将火山引擎TTS集成到Android系统TTS框架中</li>
+</ul>
+<h5 id="核心功能-1"><a href="#核心功能-1" class="headerlink" title="核心功能"></a>核心功能</h5><h6 id="1-系统TTS服务集成"><a href="#1-系统TTS服务集成" class="headerlink" title="1. 系统TTS服务集成"></a>1. 系统TTS服务集成</h6><ul>
+<li><strong>继承Android TTS框架</strong>: 继承<code>TextToSpeechService</code>，实现系统级TTS服务</li>
+<li><strong>多语言支持</strong>: 支持多种语言的语音合成</li>
+<li><strong>系统级调用</strong>: 可以被其他应用通过Android TTS API调用</li>
+</ul>
+<h6 id="2-智能文本处理"><a href="#2-智能文本处理" class="headerlink" title="2. 智能文本处理"></a>2. 智能文本处理</h6><ul>
+<li><strong>长文本拆分</strong>: 自动将超过80字符的文本拆分为合适片段</li>
+<li><strong>智能断句</strong>: 按句子边界、逗号、空格等自然断点拆分</li>
+<li><strong>连续合成</strong>: 支持长文本的连续流畅合成</li>
+</ul>
+<h6 id="3-异步合成控制"><a href="#3-异步合成控制" class="headerlink" title="3. 异步合成控制"></a>3. 异步合成控制</h6><ul>
+<li><strong>单线程作业维持</strong>: 通过阻塞队列维持TTS作业在单个线程中执行</li>
+<li><strong>状态同步</strong>: 协调合成引擎、监听器和系统回调之间的状态</li>
+<li><strong>错误处理</strong>: 完善的异常捕获和错误恢复机制</li>
+</ul>
+<h5 id="关键技术实现-1"><a href="#关键技术实现-1" class="headerlink" title="关键技术实现"></a>关键技术实现</h5><h6 id="1-TTS作业的线程控制机制"><a href="#1-TTS作业的线程控制机制" class="headerlink" title="1. TTS作业的线程控制机制"></a>1. TTS作业的线程控制机制</h6><p>TTSService的核心挑战是<strong>将火山引擎SDK的异步回调转换为同步的TTS服务调用</strong>。这是通过以下机制实现的：</p>
+<p>阻塞队列同步</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在TTSService中</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">byte</span>[] CONTROL_SIGNAL = <span class="keyword">new</span> <span class="title class_">byte</span>[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 音频数据处理循环</span></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="type">byte</span>[] chunk = ttsContext.audioDataQueue.take();</span><br><span class="line">    <span class="keyword">if</span> (chunk != <span class="literal">null</span> &amp;&amp; chunk != CONTROL_SIGNAL &amp;&amp; chunk.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 处理音频数据</span></span><br><span class="line">        callback.audioAvailable(chunk, offset, chunkSize);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">while</span> (!ttsContext.isAudioQueueDone.get() &amp;&amp; !ttsContext.isTTSInterrupted.get());</span><br></pre></td></tr></table></figure></div>
+
+<p>在SynthesisEngineListener中的对应实现</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 各种状态通知时向队列发送控制信号</span></span><br><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onSpeechMessage</span><span class="params">(type: <span class="type">Int</span>, <span class="keyword">data</span>: <span class="type">ByteArray</span>?, len: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">when</span> (type) &#123;</span><br><span class="line">        SpeechEngineDefines.MESSAGE_TYPE_TTS_AUDIO_DATA -&gt; &#123;</span><br><span class="line">            ttsContext.audioDataQueue.put(<span class="keyword">data</span>)  <span class="comment">// 发送音频数据</span></span><br><span class="line">        &#125;</span><br><span class="line">        SpeechEngineDefines.MESSAGE_TYPE_TTS_FINISH_PLAYING -&gt; &#123;</span><br><span class="line">            ttsContext.isAudioQueueDone.<span class="keyword">set</span>(<span class="literal">true</span>)  <span class="comment">// 设置完成标志</span></span><br><span class="line">            ttsContext.audioDataQueue.put(controlSignal)  <span class="comment">// 发送完成信号</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// ... 其他状态处理</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="2-状态控制系统"><a href="#2-状态控制系统" class="headerlink" title="2. 状态控制系统"></a>2. 状态控制系统</h6><p>TTSContext状态容器</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TTSContext</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> BlockingQueue&lt;<span class="type">byte</span>[]&gt; audioDataQueue = <span class="keyword">new</span> <span class="title class_">LinkedBlockingQueue</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">AtomicBoolean</span> <span class="variable">isAudioQueueDone</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicBoolean</span>(<span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">AtomicBoolean</span> <span class="variable">isTTSInterrupted</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicBoolean</span>(<span class="literal">false</span>);</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">AtomicBoolean</span> <span class="variable">isTTSEngineError</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicBoolean</span>(<span class="literal">false</span>);</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">AtomicInteger</span> <span class="variable">currentEngineState</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicInteger</span>();</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> AtomicReference&lt;String&gt; currentEngineMsg = <span class="keyword">new</span> <span class="title class_">AtomicReference</span>&lt;&gt;();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>状态流转流程</p>
+<ol>
+<li><strong>初始化状态</strong>: <code>isAudioQueueDone=true</code>, <code>isTTSInterrupted=false</code></li>
+<li><strong>开始合成</strong>: <code>isAudioQueueDone=false</code>，开始监听音频队列</li>
+<li><strong>数据接收</strong>: SynthesisEngineListener接收音频数据并放入队列</li>
+<li><strong>数据处理</strong>: TTSService从队列取出数据并传递给系统</li>
+<li><strong>完成通知</strong>: 收到完成信号后设置<code>isAudioQueueDone=true</code></li>
+<li><strong>中断处理</strong>: 任何时候都可以通过<code>isTTSInterrupted</code>中断作业</li>
+</ol>
+<h6 id="3-长文本智能拆分算法"><a href="#3-长文本智能拆分算法" class="headerlink" title="3. 长文本智能拆分算法"></a>3. 长文本智能拆分算法</h6><div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> List&lt;String&gt; <span class="title function_">splitLongText</span><span class="params">(String text)</span> &#123;</span><br><span class="line">    List&lt;String&gt; segments = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 定义句子分隔符（中英文、全角半角）</span></span><br><span class="line">    String[] sentenceDelimiters = &#123;<span class="string">&quot;.&quot;</span>, <span class="string">&quot;。&quot;</span>, <span class="string">&quot;!&quot;</span>, <span class="string">&quot;！&quot;</span>, <span class="string">&quot;?&quot;</span>, <span class="string">&quot;？&quot;</span>, <span class="string">&quot;;&quot;</span>, <span class="string">&quot;；&quot;</span>&#125;;</span><br><span class="line">    String[] clauseDelimiters = &#123;<span class="string">&quot;,&quot;</span>, <span class="string">&quot;，&quot;</span>&#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> <span class="variable">maxLength</span> <span class="operator">=</span> <span class="number">80</span>;</span><br><span class="line">    <span class="type">int</span> <span class="variable">currentPos</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> (currentPos &lt; text.length()) &#123;</span><br><span class="line">        <span class="comment">// 优先按句子边界拆分，其次按逗号，最后按空格</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">splitPos</span> <span class="operator">=</span> findBestSplitPoint(text, currentPos, maxLength, </span><br><span class="line">                                        sentenceDelimiters, clauseDelimiters);</span><br><span class="line">        </span><br><span class="line">        segments.add(text.substring(currentPos, splitPos).trim());</span><br><span class="line">        currentPos = splitPos;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> segments;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h5 id="TTS作业完整流程"><a href="#TTS作业完整流程" class="headerlink" title="TTS作业完整流程"></a>TTS作业完整流程</h5><h6 id="1-单次合成流程（≤80字符）"><a href="#1-单次合成流程（≤80字符）" class="headerlink" title="1. 单次合成流程（≤80字符）"></a>1. 单次合成流程（≤80字符）</h6><div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 系统调用onSynthesizeText</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">onSynthesizeText</span><span class="params">(SynthesisRequest request, SynthesisCallback callback)</span> &#123;</span><br><span class="line">    <span class="comment">// 2. 验证配置</span></span><br><span class="line">    <span class="type">SettingsData</span> <span class="variable">settings</span> <span class="operator">=</span> settingsFunction.getSettings();</span><br><span class="line">    <span class="keyword">if</span> (!checkSettings(settings)) &#123;</span><br><span class="line">        callback.error();</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 创建合成引擎</span></span><br><span class="line">    synthesisEngine.create(settings.getAppId(), settings.getToken(),</span><br><span class="line">            settings.getSelectedSpeakerId(), settings.getServiceCluster(), settings.isEmotional());</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 启动合成</span></span><br><span class="line">    synthesisEngine.startEngine(text, request.getSpeechRate(), <span class="literal">null</span>, request.getPitch());</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 5. 初始化系统回调</span></span><br><span class="line">    callback.start(<span class="number">16000</span>, AudioFormat.ENCODING_PCM_16BIT, <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 6. 进入音频数据处理循环</span></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="type">byte</span>[] chunk = ttsContext.audioDataQueue.take();</span><br><span class="line">        <span class="keyword">if</span> (chunk != CONTROL_SIGNAL &amp;&amp; chunk.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            callback.audioAvailable(chunk, offset, chunkSize);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (!ttsContext.isAudioQueueDone.get());</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 7. 完成回调</span></span><br><span class="line">    callback.done();</span><br><span class="line">    synthesisEngine.destroy();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="2-长文本合成流程（-80字符）"><a href="#2-长文本合成流程（-80字符）" class="headerlink" title="2. 长文本合成流程（&gt;80字符）"></a>2. 长文本合成流程（&gt;80字符）</h6><div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">synthesizeLongText</span><span class="params">(String text, SynthesisRequest request,</span></span><br><span class="line"><span class="params">                              SynthesisCallback callback, SettingsData settings)</span> &#123;</span><br><span class="line">    <span class="comment">// 1. 智能拆分文本</span></span><br><span class="line">    List&lt;String&gt; segments = splitLongText(text);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 初始化系统回调</span></span><br><span class="line">    callback.start(<span class="number">16000</span>, AudioFormat.ENCODING_PCM_16BIT, <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 分段合成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; segments.size(); i++) &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">segment</span> <span class="operator">=</span> segments.get(i);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 4. 为每个片段创建新的引擎实例</span></span><br><span class="line">        synthesisEngine.create(settings.getAppId(), settings.getToken(),</span><br><span class="line">                settings.getSelectedSpeakerId(), settings.getServiceCluster(), settings.isEmotional());</span><br><span class="line">        synthesisEngine.startEngine(segment, request.getSpeechRate(), <span class="literal">null</span>, request.getPitch());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 5. 处理当前片段的音频数据</span></span><br><span class="line">        <span class="type">boolean</span> <span class="variable">segmentCompleted</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">        ttsContext.isAudioQueueDone.set(<span class="literal">false</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> (!segmentCompleted) &#123;</span><br><span class="line">            <span class="type">byte</span>[] chunk = ttsContext.audioDataQueue.take();</span><br><span class="line">            <span class="keyword">if</span> (chunk != CONTROL_SIGNAL &amp;&amp; chunk.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                callback.audioAvailable(chunk, offset, chunkSize);</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 6. 检查片段是否完成</span></span><br><span class="line">            <span class="keyword">if</span> (ttsContext.isAudioQueueDone.get()) &#123;</span><br><span class="line">                segmentCompleted = <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 7. 销毁当前片段引擎</span></span><br><span class="line">        synthesisEngine.destroy();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 8. 完成整个合成</span></span><br><span class="line">    callback.done();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="3-异步回调到同步处理的转换"><a href="#3-异步回调到同步处理的转换" class="headerlink" title="3. 异步回调到同步处理的转换"></a>3. 异步回调到同步处理的转换</h6><p><strong>关键挑战</strong>: 火山引擎SDK通过异步回调返回数据，但Android TTS框架要求同步处理。</p>
+<p><strong>解决方案</strong>:</p>
+<ul>
+<li><strong>阻塞队列</strong>: 使用<code>LinkedBlockingQueue</code>作为数据缓冲区</li>
+<li><strong>控制信号</strong>: 使用特殊的空字节数组作为状态信号</li>
+<li><strong>状态标志</strong>: 使用原子布尔值确保线程安全的状态同步</li>
+</ul>
+<p><strong>工作流程</strong>:</p>
+<ol>
+<li>TTSService在<code>onSynthesizeText</code>中启动合成后进入等待状态</li>
+<li>SynthesisEngineListener在后台线程接收SDK回调</li>
+<li>监听器将音频数据放入队列，并设置状态标志</li>
+<li>TTSService的主循环检测到状态变化后继续处理</li>
+<li>整个过程对调用方来说是同步的</li>
+</ol>
+<h5 id="设计特点-1"><a href="#设计特点-1" class="headerlink" title="设计特点"></a>设计特点</h5><h6 id="1-线程安全设计"><a href="#1-线程安全设计" class="headerlink" title="1. 线程安全设计"></a>1. 线程安全设计</h6><ul>
+<li><strong>原子操作</strong>: 使用<code>AtomicBoolean</code>、<code>AtomicInteger</code>等保证状态操作的原子性</li>
+<li><strong>阻塞队列</strong>: <code>LinkedBlockingQueue</code>提供线程安全的数据传输</li>
+<li><strong>主线程安全</strong>: 通过Handler确保UI操作在主线程执行</li>
+</ul>
+<h6 id="2-资源管理"><a href="#2-资源管理" class="headerlink" title="2. 资源管理"></a>2. 资源管理</h6><ul>
+<li><strong>引擎实例管理</strong>: 每个合成会话创建独立的引擎实例</li>
+<li><strong>及时销毁</strong>: 合成完成后立即销毁引擎释放资源</li>
+<li><strong>内存优化</strong>: 及时清理音频数据避免内存泄漏</li>
+</ul>
+<h6 id="3-错误恢复机制"><a href="#3-错误恢复机制" class="headerlink" title="3. 错误恢复机制"></a>3. 错误恢复机制</h6><ul>
+<li><strong>配置验证</strong>: 合成前验证所有必要配置</li>
+<li><strong>异常捕获</strong>: 完善的try-catch块处理各种异常</li>
+<li><strong>状态重置</strong>: 发生错误时重置所有状态标志</li>
+</ul>
+<h5 id="技术点"><a href="#技术点" class="headerlink" title="技术点"></a>技术点</h5><ol>
+<li><strong>异步到同步转换</strong>: 成功将火山引擎的异步回调转换为系统TTS的同步接口</li>
+<li><strong>文本处理</strong>: 支持任意长度文本的流畅合成</li>
+<li><strong>状态管理</strong>: 多线程环境下的可靠状态同步</li>
+</ol>
+<p><code>TTSService.java</code>是整个项目的技术核心。它成功解决了异步SDK与同步系统框架之间的集成难题，为用户提供了稳定可靠的系统级TTS服务。</p>
+<h5 id="额外注意"><a href="#额外注意" class="headerlink" title="额外注意"></a>额外注意</h5><p>在设置<strong>是否使用豆包语音合成SDK内置播放器播放合成出的音频</strong>参数<code>com.bytedance.speech.speechengine.SpeechEngineDefines#PARAMS_KEY_TTS_ENABLE_PLAYER_BOOL</code>时我选择了<code>true</code>也就是说<strong>SDK会自动播放合成出的音频</strong>，进而也就<strong>无需通过<code>android.speech.tts.SynthesisCallback#audioAvailable</code>将合成后的音频内容提交至系统接口交由系统来发出音频对应的声音了</strong>。</p>
+<p>之所以这样做是因为当<strong>选择了不通过SDK内置播放器播放合成出的音频的话SDK回调中将不会返回播放进度</strong>，考虑到得到合成音频数据后<strong>通过音频数据计算而来的播放时长并非完全准确</strong>，同时<code>android.speech.tts.SynthesisCallback#audioAvailable</code>并不会等待音频播放完成后返回（异步播放）而是在<strong>将音频数据通过该接口提交给系统后立刻返回了</strong>，进而<strong>导致<code>android.speech.tts.TextToSpeechService#onSynthesizeText</code>函数早于语音播放结束前返回</strong>，<strong>最终导致了TTS任务结束时间和合成后的语音播放进度不对齐的问题</strong>。</p>
+<p>为了避免这种情况我选择了通过SDK来播放音频，这样我可以通过<strong>SDK的播放状态回调结合<code>TTSContext</code>的状态控制</strong>来合理阻塞<code>android.speech.tts.TextToSpeechService#onSynthesizeText</code>实现函数的执行来<strong>使得TTS作业进度与音频播放进度保持一致</strong>。</p>
+<h4 id="Jetpack-Compose"><a href="#Jetpack-Compose" class="headerlink" title="Jetpack Compose"></a>Jetpack Compose</h4><p>Jetpack Compose是Android官方推出的<strong>现代声明式UI工具包</strong>，它彻底改变了Android应用的UI开发方式。与传统的基于XML的视图系统不同，Compose使用Kotlin语言来构建用户界面，提供了更简洁、更直观的开发体验。</p>
+<h5 id="Compose的核心优势"><a href="#Compose的核心优势" class="headerlink" title="Compose的核心优势"></a>Compose的核心优势</h5><ol>
+<li><strong>声明式编程</strong>：描述UI应该是什么样子，而不是如何构建</li>
+<li><strong>响应式状态</strong>：UI自动响应状态变化，无需手动更新视图</li>
+<li><strong>组合优于继承</strong>：通过组合小型可重用组件构建复杂UI</li>
+<li><strong>Kotlin原生支持</strong>：完全基于Kotlin，享受语言特性优势</li>
+</ol>
+<h5 id="工程中的Compose应用"><a href="#工程中的Compose应用" class="headerlink" title="工程中的Compose应用"></a>工程中的Compose应用</h5><p>VolcengineTTS项目全面采用Jetpack Compose构建用户界面，主要体现在以下几个关键组件中：</p>
+<h6 id="1-主界面架构-MainActivity-kt"><a href="#1-主界面架构-MainActivity-kt" class="headerlink" title="1. 主界面架构 (MainActivity.kt)"></a>1. <strong>主界面架构 (MainActivity.kt)</strong></h6><p><strong>MVVM模式集成</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">VolcengineTTSUI</span><span class="params">(modifier: <span class="type">Modifier</span> = Modifier)</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> viewModel: VolcengineTTSViewModel = viewModel(factory = <span class="keyword">object</span> : ViewModelProvider.Factory &#123;</span><br><span class="line">        <span class="meta">@Suppress(<span class="string">&quot;UNCHECKED_CAST&quot;</span>)</span></span><br><span class="line">        <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T : ViewModel&gt;</span> <span class="title">create</span><span class="params">(modelClass: <span class="type">Class</span>&lt;<span class="type">T</span>&gt;, extras: <span class="type">CreationExtras</span>)</span></span>: T &#123;</span><br><span class="line">            <span class="keyword">val</span> application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])</span><br><span class="line">            <span class="keyword">return</span> VolcengineTTSViewModel(application) <span class="keyword">as</span> T</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// UI构建...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>状态管理</strong>：</p>
+<ul>
+<li>使用<code>mutableStateOf</code>管理UI状态</li>
+<li>通过ViewModel实现业务逻辑与UI分离</li>
+<li>自动响应状态变化，实现实时UI更新</li>
+</ul>
+<p><strong>组件化设计</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">LazyColumn &#123;</span><br><span class="line">    item &#123; TTSBasicConfigurationInputs(...) &#125;    <span class="comment">// 基础配置组件</span></span><br><span class="line">    item &#123; TTSVoiceConfigurationInputs(...) &#125;     <span class="comment">// 声音配置组件</span></span><br><span class="line">    item &#123; TTSSaveSettingsButton(...) &#125;          <span class="comment">// 保存按钮组件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="2-配置输入组件"><a href="#2-配置输入组件" class="headerlink" title="2. 配置输入组件"></a>2. <strong>配置输入组件</strong></h6><p><strong>表单验证与错误处理</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">TTSBasicConfigurationInputs</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    appId: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    token: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    serviceCluster: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    isAppIdError: <span class="type">Boolean</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    isTokenError: <span class="type">Boolean</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    isServiceClusterError: <span class="type">Boolean</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onAppIdChange: (<span class="type">String</span>) -&gt; <span class="type">Unit</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onTokenChange: (<span class="type">String</span>) -&gt; <span class="type">Unit</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onServiceClusterChange: (<span class="type">String</span>) -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    <span class="comment">// Material Design 3组件</span></span><br><span class="line">    OutlinedTextField(</span><br><span class="line">        value = appId,</span><br><span class="line">        onValueChange = onAppIdChange,</span><br><span class="line">        label = &#123; Text(stringResource(id = R.string.input_app_id)) &#125;,</span><br><span class="line">        isError = isAppIdError,</span><br><span class="line">        supportingText = <span class="keyword">if</span> (isAppIdError) &#123;</span><br><span class="line">            &#123; Text(text = <span class="string">&quot;App ID不能为空&quot;</span>, color = MaterialTheme.colorScheme.error) &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123; <span class="literal">null</span> &#125;</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>下拉选择器实现</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">SceneDropdown</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    selectedScene: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    sceneCategories: <span class="type">Array</span>&lt;<span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">    expanded: <span class="type">Boolean</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onExpandedChange: (<span class="type">Boolean</span>) -&gt; <span class="type">Unit</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onSceneSelect: (<span class="type">String</span>) -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> dropdownExpanded <span class="keyword">by</span> remember &#123; mutableStateOf(expanded) &#125;</span><br><span class="line">    </span><br><span class="line">    OutlinedButton(</span><br><span class="line">        onClick = &#123; onExpandedChange(!dropdownExpanded) &#125;,</span><br><span class="line">        modifier = Modifier.fillMaxWidth()</span><br><span class="line">    ) &#123;</span><br><span class="line">        Text(selectedScene)</span><br><span class="line">        Icon(Icons.Default.ArrowDropDown, contentDescription = <span class="string">&quot;下拉箭头&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    DropdownMenu(</span><br><span class="line">        expanded = dropdownExpanded,</span><br><span class="line">        onDismissRequest = &#123; onExpandedChange(<span class="literal">false</span>) &#125;</span><br><span class="line">    ) &#123;</span><br><span class="line">        sceneCategories.forEach &#123; scene -&gt;</span><br><span class="line">            DropdownMenuItem(</span><br><span class="line">                text = &#123; Text(scene) &#125;,</span><br><span class="line">                onClick = &#123;</span><br><span class="line">                    onSceneSelect(scene)</span><br><span class="line">                    onExpandedChange(<span class="literal">false</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            )</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="3-欢迎对话框-WelcomeDialog-kt"><a href="#3-欢迎对话框-WelcomeDialog-kt" class="headerlink" title="3. 欢迎对话框 (WelcomeDialog.kt)"></a>3. <strong>欢迎对话框 (WelcomeDialog.kt)</strong></h6><p><strong>动画效果</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">WelcomeDialog</span><span class="params">(onDismiss: () -&gt; <span class="type">Unit</span>, onDontShowAgain: (<span class="type">Boolean</span>) -&gt; <span class="type">Unit</span>)</span></span> &#123;</span><br><span class="line">    Dialog(onDismissRequest = &#123; onDismiss() &#125;) &#123;</span><br><span class="line">        AnimatedVisibility(</span><br><span class="line">            visible = <span class="literal">true</span>,</span><br><span class="line">            enter = fadeIn() + scaleIn(),  <span class="comment">// 淡入+缩放进入</span></span><br><span class="line">            exit = fadeOut() + scaleOut()   <span class="comment">// 淡出+缩放退出</span></span><br><span class="line">        ) &#123;</span><br><span class="line">            <span class="comment">// 对话框内容...</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>响应式设计</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> windowInfo = LocalWindowInfo.current</span><br><span class="line"><span class="keyword">val</span> containerSize = windowInfo.containerSize</span><br><span class="line"><span class="keyword">val</span> density = LocalDensity.current.density</span><br><span class="line"></span><br><span class="line"><span class="comment">// 自适应屏幕尺寸</span></span><br><span class="line"><span class="keyword">val</span> screenWidth = (containerSize.width / density).dp</span><br><span class="line"><span class="keyword">val</span> screenHeight = (containerSize.height / density).dp</span><br><span class="line"><span class="keyword">val</span> isSmallScreen = screenWidth &lt; <span class="number">360.</span>dp || screenHeight &lt; <span class="number">640.</span>dp</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据屏幕尺寸调整UI</span></span><br><span class="line">Card(</span><br><span class="line">    modifier = Modifier</span><br><span class="line">        .width(screenWidth * <span class="number">0.8f</span>)    <span class="comment">// 宽度占屏幕80%</span></span><br><span class="line">        .height(screenHeight * <span class="number">0.65f</span>) <span class="comment">// 高度占屏幕65%</span></span><br><span class="line">) &#123;</span><br><span class="line">    <span class="comment">// 内容布局...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>Material Design 3主题</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Box(</span><br><span class="line">    modifier = Modifier</span><br><span class="line">        .fillMaxSize()</span><br><span class="line">        .background(</span><br><span class="line">            brush = Brush.verticalGradient(</span><br><span class="line">                colors = listOf(Color(<span class="number">0xFF6A11CB</span>), Color(<span class="number">0xFF2575FC</span>))</span><br><span class="line">            )</span><br><span class="line">        )</span><br><span class="line">) &#123;</span><br><span class="line">    <span class="comment">// 渐变背景...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Button(</span><br><span class="line">    onClick = &#123; onDismiss() &#125;,</span><br><span class="line">    colors = ButtonDefaults.buttonColors(</span><br><span class="line">        containerColor = Color.White,      <span class="comment">// 按钮背景色</span></span><br><span class="line">        contentColor = Color(<span class="number">0xFF2575FC</span>)   <span class="comment">// 按钮文字色</span></span><br><span class="line">    )</span><br><span class="line">) &#123;</span><br><span class="line">    Text(<span class="string">&quot;开始使用&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h6 id="4-Compose与现有系统的集成"><a href="#4-Compose与现有系统的集成" class="headerlink" title="4. Compose与现有系统的集成"></a>4. <strong>Compose与现有系统的集成</strong></h6><p><strong>与传统Activity的集成</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MainActivity</span> : <span class="type">ComponentActivity</span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        enableEdgeToEdge()  <span class="comment">// 启用边缘到边缘显示</span></span><br><span class="line">        </span><br><span class="line">        setContent &#123;  <span class="comment">// 设置Compose内容</span></span><br><span class="line">            VolcengineTTSTheme &#123;  <span class="comment">// 应用自定义主题</span></span><br><span class="line">                UpdateCheckContent()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>生命周期管理</strong>：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">UpdateCheckContent</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> activity = LocalContext.current <span class="keyword">as</span> MainActivity</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 使用LaunchedEffect处理协程生命周期</span></span><br><span class="line">    LaunchedEffect(<span class="built_in">Unit</span>) &#123;</span><br><span class="line">        activity.checkForUpdate(</span><br><span class="line">            onUpdateAvailable = &#123; version, notes, url -&gt;</span><br><span class="line">                <span class="comment">// 处理更新可用逻辑</span></span><br><span class="line">            &#125;,</span><br><span class="line">            onError = &#123; message -&gt;</span><br><span class="line">                <span class="comment">// 处理错误逻辑</span></span><br><span class="line">            &#125;</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    VolcengineTTSUI()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h5 id="Compose在工程中的技术特点"><a href="#Compose在工程中的技术特点" class="headerlink" title="Compose在工程中的技术特点"></a>Compose在工程中的技术特点</h5><ol>
+<li><strong>状态驱动UI</strong>：所有UI组件都基于ViewModel中的状态自动更新</li>
+<li><strong>组合式架构</strong>：通过小型可组合函数构建复杂界面</li>
+<li><strong>Material Design 3</strong>：全面采用最新的Material Design设计语言</li>
+<li><strong>响应式布局</strong>：自适应不同屏幕尺寸和设备方向</li>
+<li><strong>动画集成</strong>：内置丰富的动画效果，提升用户体验</li>
+</ol>
+<h5 id="构建配置中的Compose支持"><a href="#构建配置中的Compose支持" class="headerlink" title="构建配置中的Compose支持"></a>构建配置中的Compose支持</h5><p>在<code>app/build.gradle.kts</code>中启用了Compose支持：</p>
+<div class="code-container" data-rel="Kotlin"><figure class="iseeu highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">    buildFeatures &#123;</span><br><span class="line">        compose = <span class="literal">true</span>  <span class="comment">// 启用Jetpack Compose</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    composeOptions &#123;</span><br><span class="line">        kotlinCompilerExtensionVersion = <span class="string">&quot;1.5.4&quot;</span>  <span class="comment">// Compose编译器版本</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">    implementation(libs.androidx.activity.compose)    <span class="comment">// Compose Activity支持</span></span><br><span class="line">    implementation(libs.androidx.compose.ui)          <span class="comment">// Compose UI核心</span></span><br><span class="line">    implementation(libs.androidx.compose.material3)   <span class="comment">// Material Design 3组件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> 基于AI的语音合成软件</li>
+        <li><strong>作者:</strong> wxh</li>
+        <li><strong>创建于
+                :</strong> 2025-10-11 00:00:00</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-03-25 20:36:45
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://blog.private-cloud.site/2025/10/11/语音合成软件开发/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Android/">#Android</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Android-Studio/">#Android Studio</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/IT/">#IT</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Development/">#Development</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Programming/">#Programming</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2025/12/22/%E7%A7%91%E7%9B%AE%E4%B8%89%E8%80%83%E8%AF%95%E8%A6%81%E7%82%B9/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">科目三考试要点</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2025/09/03/%E4%B8%8EAI%E7%9A%84%E5%AF%B9%E8%AF%9D/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">一场与AI的对话</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://waline.private-cloud.site',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+                    lang: 'zh-CN',
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">基于AI的语音合成软件</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91"><span class="nav-text">开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5"><span class="nav-text">相关概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A5%E7%A8%8B%E7%BB%93%E6%9E%84"><span class="nav-text">工程结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD%E5%AE%9E%E7%8E%B0"><span class="nav-text">功能实现</span></a></li></ol></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2025</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">wxh</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 20 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.5</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/Swup.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupSlideTheme.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupScriptsPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupProgressPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupScrollPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupPreloadPlugin.min.js" ></script>
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/imageViewer.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/utils.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/main.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/navbarShrink.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/scrollTopBottom.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/lightDarkSwitch.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/categoryList.js" ></script>
+
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/codeBlock.js" ></script>
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/lazyload.js" ></script>
+
+
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/runtime.js" ></script>
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/odometer.min.js" ></script>
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/assets/odometer-theme-minimal.css">
+
+
+
+  <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/Typed.min.js" ></script>
+  <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/plugins/typed.js" ></script>
+
+
+
+
+
+
+
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/tocToggle.js" data-swup-reload-script></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/toc.js" data-swup-reload-script></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/plugins/tabs.js" data-swup-reload-script></script>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/moment-with-locales.min.js" data-swup-reload-script></script>
+<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/essays.js" data-swup-reload-script></script>
+
+
+
+
+	
+</body>
+
+</html>

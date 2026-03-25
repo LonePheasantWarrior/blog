@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="wxh">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set data attribute for CSS variables
+                root.setAttribute("data-theme", theme);
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes once DOM is ready
+            if (document.readyState !== "loading") {
+                document.body.classList.add(theme + "-mode");
+            } else {
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.body.classList.add(theme + "-mode");
+                    document.body.classList.remove((theme === DARK ? LIGHT : DARK) + "-mode");
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Critical CSS to prevent flash -->
+    <style>
+        :root[data-theme="dark"] {
+            --background-color: #202124;
+            --background-color-transparent: rgba(32, 33, 36, 0.6);
+            --second-background-color: #2d2e32;
+            --third-background-color: #34353a;
+            --third-background-color-transparent: rgba(32, 33, 36, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #ffffff;
+            --second-text-color: #eeeeee;
+            --third-text-color: #bebec6;
+            --fourth-text-color: #999999;
+            --default-text-color: #bebec6;
+            --invert-text-color: #373D3F;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(255, 255, 255, 0.08);
+            --shadow-color-2: rgba(255, 255, 255, 0.05);
+        }
+        
+        :root[data-theme="light"] {
+            --background-color: #fff;
+            --background-color-transparent: rgba(255, 255, 255, 0.6);
+            --second-background-color: #f8f8f8;
+            --third-background-color: #f2f2f2;
+            --third-background-color-transparent: rgba(241, 241, 241, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #16171a;
+            --second-text-color: #2f3037;
+            --third-text-color: #5e5e5e;
+            --fourth-text-color: #eeeeee;
+            --default-text-color: #373D3F;
+            --invert-text-color: #bebec6;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(0, 0, 0, 0.08);
+            --shadow-color-2: rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+        
+        /* Apply body classes as soon as DOM is ready */
+        :root[data-theme="dark"] body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+    </style>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+        
+        
+        
+            <link rel="preconnect" href="https://evan.beee.top" crossorigin>
+        
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://blog.private-cloud.site/2025/12/22/科目三考试要点/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="科目三考试要点">
+<meta property="og:url" content="https://blog.private-cloud.site/2025/12/22/%E7%A7%91%E7%9B%AE%E4%B8%89%E8%80%83%E8%AF%95%E8%A6%81%E7%82%B9/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.private-cloud.site/images/redefine-og.webp">
+<meta property="article:published_time" content="2025-12-22T04:22:01.000Z">
+<meta property="article:modified_time" content="2026-03-25T12:36:45.939Z">
+<meta property="article:author" content="wxh">
+<meta property="article:tag" content="日常">
+<meta property="article:tag" content="驾考">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.private-cloud.site/images/redefine-og.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/favicon.webp" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.webp">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/favicon.webp">
+    <!--- Page Info-->
+    
+    <title>
+        
+            科目三考试要点 | 晓虎的博客
+        
+    </title>
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/Chillax/chillax.css">
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/css/build/tailwind.css">
+    
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/GeistMono/geist-mono.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fonts/Geist/geist.css">
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/anime.min.js" ></script>
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"blog.private-cloud.site","root":"/","language":"zh-CN","path":"search.json"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":true,"custom_message":"欢迎访问我的小窝"},"side_tools":{"gear_rotation":true,"auto_expand":false},"open_graph":{"enable":true,"image":"/images/redefine-og.webp","description":"Hexo Theme Redefine, Redefine Your Hexo Journey."},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"static","image":{"light":"images/banner_light_wuxia.webp","dark":"images/banner_dark2.webp"},"title":"晓虎的博客","subtitle":{"text":["无限思考","无限进步","无限创造"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1"}},"version":"2.8.5","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}},"title":"欢迎访问我的小窝"},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2025/3/18 12:00:01"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/fontawesome.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/brands.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/solid.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/fontawesome/regular.min.css">
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.0.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        欢迎访问我的小窝
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/favicon.webp" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                晓虎的博客
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/archives"
+                        >
+                            <span>Archives</span>
+                            <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/tags"
+                        >
+                            <span>Tags</span>
+                            <i class="fa-regular fa-tags fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/categories"
+                        >
+                            <span>Categories</span>
+                            <i class="fa-regular fa-folder fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/essays"
+                        >
+                            <span>Essays</span>
+                            <i class="fa-regular fa-pen fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">43</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">20</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			
+			
+			<img src="/images/wlop/8_Snowy2_4k_%E7%BB%93%E6%9E%9C.webp" alt="科目三考试要点" class="w-full h-60 sm:h-72 md:h-80 object-cover sm:rounded-t-large dark:brightness-75" />
+			
+			<div class="w-full flex items-center absolute bottom-0 justify-start">
+				<h1 class="article-title-cover text-center mx-6 my-6 text-second-text-color bg-background-color-transparent px-4 py-3 text-3xl sm:text-4xl md:text-5xl font-semibold backdrop-blur-lg rounded-xl border border-border-color ">科目三考试要点</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="/images/avatar.webp">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">wxh</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2025-12-22 12:22:01</span>
+        <span class="mobile">2025-12-22 12:22:01</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-03-25 20:36:45</span>
+            <span class="mobile">2026-03-25 20:36:45</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/%E6%97%A5%E5%B8%B8/">日常</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/%E6%97%A5%E5%B8%B8/">日常</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E9%A9%BE%E8%80%83/">驾考</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<blockquote>
+<p>济源市阳光驾考B2驾照科目三考试</p>
+</blockquote>
+<h1 id="考试须知"><a href="#考试须知" class="headerlink" title="考试须知"></a>考试须知</h1><h3 id="上车"><a href="#上车" class="headerlink" title="上车"></a>上车</h3><ol>
+<li>上车检查<ol>
+<li>灯光（保持近光灯档位关闭状态）</li>
+<li>调整座椅手刹状态（保持拉起）</li>
+</ol>
+</li>
+<li>根据电脑提示下车环绕一周（按下车身3个按钮）</li>
+<li>上车系好安全带</li>
+<li>根据电脑知识启动发动机</li>
+<li>模拟夜间灯光</li>
+<li>起步<ol>
+<li>右转向灯</li>
+<li>挂二档</li>
+<li>观察前后来车，确认安全</li>
+<li>放手刹（十秒内需要出车）</li>
+</ol>
+</li>
+<li>二档前进一段距离后再挂三档</li>
+</ol>
+<h3 id="起步"><a href="#起步" class="headerlink" title="起步"></a>起步</h3><ol>
+<li>二档起步（需要给油才能走）</li>
+<li>挂挡完成左脚完全离开离合踏板</li>
+<li>二档跑到15迈后换三档</li>
+</ol>
+<h3 id="行进过程"><a href="#行进过程" class="headerlink" title="行进过程"></a>行进过程</h3><ol>
+<li>停止线（包括路口和人行横道前等位置）前3～5米处需踩刹车（深度适中，无需同步踩离合）</li>
+<li>三档前进速度要求为10～30迈（推荐保持25迈多一点）</li>
+<li>公交站位置需要踩刹车（深度适中，无需同步踩离合）</li>
+<li>学校区域速度保持30迈以下</li>
+<li>二档和一档期间行驶位置最大不得超过50米</li>
+<li>带挡滑行距离不得超过100米</li>
+<li>转向灯闪烁5秒后再行动</li>
+<li>避免在一次离合期间换挡两次或以上</li>
+<li>在任意车道都可以停车等待（路口内和斑马线位置不允许）</li>
+<li>快到路口停止线时踩下离合带档滑行（滑行期间禁止摘档，最大允许滑行200米），完全停止后摘档</li>
+<li>两次变道操作期间必须间隔10秒或以上</li>
+<li>转弯时在弯道中央关闭转向灯</li>
+</ol>
+<h3 id="停止"><a href="#停止" class="headerlink" title="停止"></a>停止</h3><ol>
+<li>开右转向，在停止牌位置提前3米处暂停</li>
+<li>一档前进，根据语音提示靠边停车（参考黑疙瘩摆正车辆）</li>
+<li>熄火下车<ol>
+<li>关转向</li>
+<li>挂空挡</li>
+<li>拉手刹</li>
+<li>熄火</li>
+<li>解开安全带</li>
+<li>观察（查看后视镜3秒以上）</li>
+<li>下车后立马关门</li>
+</ol>
+</li>
+</ol>
+<h1 id="灯光考试"><a href="#灯光考试" class="headerlink" title="灯光考试"></a>灯光考试</h1><p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/../images/other/%E7%A7%91%E7%9B%AE%E4%B8%89%E7%81%AF%E5%85%89%E8%80%83%E5%AF%9F%E9%A1%B9%E7%9B%AE.jpg"
+                      alt="科目三灯光考察项目.jpg"
+                ></p>
+<h3 id="模拟考试"><a href="#模拟考试" class="headerlink" title="模拟考试"></a>模拟考试</h3><p>为了方便记忆，我拜托AI写了个<a class="link"   target="_blank" rel="noopener" href="https://subject-three-lighting-test.private-cloud.site/" >测试小网站<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
+<h1 id="一号线"><a href="#一号线" class="headerlink" title="一号线"></a>一号线</h1><div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <video width="136" height="240" controls style="flex-shrink: 0;">
+        <source src="https://aura.private-cloud.site:9000/public/videos/subject-three/%e7%a7%91%e4%b8%89-1%e5%8f%b7%e7%ba%bf_1.mp4" type="video/mp4">
+        当前软件不支持播放视频，建议用传统浏览器打开页面
+    </video>
+    <video width="136" height="240" controls style="flex-shrink: 0;">
+        <source src="https://aura.private-cloud.site:9000/public/videos/subject-three/%e7%a7%91%e4%b8%89-1%e5%8f%b7%e7%ba%bf_2.mp4" type="video/mp4">
+        当前软件不支持播放视频，建议用传统浏览器打开页面
+    </video>
+</div>
+
+<h3 id="第一个左转弯路口"><a href="#第一个左转弯路口" class="headerlink" title="第一个左转弯路口"></a>第一个左转弯路口</h3><p>该路口位于斜面，注意起步时避免溜车。路口中央有圆形标志，避免跨越</p>
+<h3 id="公交车站"><a href="#公交车站" class="headerlink" title="公交车站"></a>公交车站</h3><p>位于左转弯后马路右侧</p>
+<p>电脑并不会提示公交车站相关信息，需要自行观察</p>
+<p>在标示牌提前一棵树的位置点刹车（无需停车，无需踩离合）</p>
+<h3 id="学校区域"><a href="#学校区域" class="headerlink" title="学校区域"></a>学校区域</h3><p>保持速度不超过30迈即可，无需做额外动作</p>
+<h3 id="前方会车"><a href="#前方会车" class="headerlink" title="前方会车"></a>前方会车</h3><p>听到电脑播报相关语音后点刹车（无需停车，无需踩离合）</p>
+<h3 id="路口长实线前的虚线"><a href="#路口长实线前的虚线" class="headerlink" title="路口长实线前的虚线"></a>路口长实线前的虚线</h3><p>该虚线磨损严重无法看清，但需要避免压线</p>
+<p>保持靠左侧黄线前进，待黄线向左侧偏移扩车道时再向右前方行进进入中间的直行车道（保持在直行车道的左侧，右侧白线实际位置与电脑标识位置更靠右）</p>
+<h3 id="直线行驶"><a href="#直线行驶" class="headerlink" title="直线行驶"></a>直线行驶</h3><p>直着走即可，避免变道或者其他额外动作</p>
+<h3 id="超越前方车辆"><a href="#超越前方车辆" class="headerlink" title="超越前方车辆"></a>超越前方车辆</h3><p>先开转向灯，待转向灯闪烁5秒后再做动作。如果当前交通不具备变道条件则停车等待（必须停车等待而非继续前进）</p>
+<p>变道完成后关闭转向灯，车摆正之后立马开启右转向灯</p>
+<p>等待右转向灯闪烁5秒后观察后侧交通情况确认安全返回至右侧车道（同样如果不具备变道条件必须停车等待）</p>
+<h3 id="变道至快车道"><a href="#变道至快车道" class="headerlink" title="变道至快车道"></a>变道至快车道</h3><p>在有名为“洛峪新村”标示牌的路口前完成变道<br>具体变道时机推荐在超车项目完成后看到道路右手边红大门处变道</p>
+<p>本次变道的目的是为了接下来的4档高速行驶做准备</p>
+<h3 id="高速行驶"><a href="#高速行驶" class="headerlink" title="高速行驶"></a>高速行驶</h3><p>在经过名为“洛峪新村”标示牌的路口后即可换挡至4档，要求速度为45迈以上（不要超过50迈）保持5秒钟</p>
+<p>注意升档必须是2-3-4这样的步骤，不允许跳跃换挡</p>
+<p>5秒钟后无需降档保持4档行驶即可，注意保持速度20迈以上（不超50迈）</p>
+<p>即使前方路口为绿灯也必须停车，停车后重新2档起步（避免过路口后依旧为4档）</p>
+<h3 id="掉头"><a href="#掉头" class="headerlink" title="掉头"></a>掉头</h3><p>听到掉头提示音后打开左转向灯</p>
+<p>车头超过护栏后开始带档滑行，观察左侧地缝。地缝处停车摘档观察路况</p>
+<p>尽量在左侧第一条和第二条地缝之间进行掉头，操作时方向盘应打死</p>
+<p>掉后头保持慢车道行驶</p>
+<h3 id="变更车道"><a href="#变更车道" class="headerlink" title="变更车道"></a>变更车道</h3><p>听到语音提示后打开左转向灯，左转向灯闪烁5秒后开始变道</p>
+<p>如果当前交通情况不允许进行变道的话必须停车等待条件合适后开始执行变道（切勿硬着头皮继续前进）</p>
+<h3 id="错位车道路口"><a href="#错位车道路口" class="headerlink" title="错位车道路口"></a>错位车道路口</h3><p>建议走左侧直行车道，可沿着左侧隔离带边线前进直到驾驶员身体到达边线向左侧扩展车道延伸时向左侧打半圈方向往前走一小段后再回正确保车体后侧不会压倒左侧直行车道的右侧边线</p>
+<p>停止线前建议停车观察，确保右侧直行车道没有车辆争抢路口前进路线后再起步</p>
+<p>路口位置别着急向左前方转向避免车体左后侧压线</p>
+<p>通过路口后保持左侧快车道前进</p>
+<h3 id="右转"><a href="#右转" class="headerlink" title="右转"></a>右转</h3><p>听到语音提示后（打开右转转向灯）确保车辆驶入右侧车道准备右转</p>
+<p>路口处必须停车。该路口右侧实线超过了停止线，起步后需要将车体行驶至路口中央时再右转避免压线。可以在驾驶员身体超过了右侧树林的树木时再进行转向（转向时关闭转向灯）。</p>
+<p>在经过停止线后建议车身向左侧修正一点避免压倒延伸过停止线的右侧实线。</p>
+<p>转向期间保持2档，转向结束后再挂3档</p>
+<h3 id="返回"><a href="#返回" class="headerlink" title="返回"></a>返回</h3><p>终点牌前3～5米处停车。建议直接在快车道位置停下</p>
+<p>停车后摘档，确保安全后打开右转向（等待5秒）变道至最右侧道路（1档前进，需要加油门避免车速过慢长时间压中间虚线）</p>
+<p>经过终点牌后1档怠速行驶，观察右侧圆镜子，保持黑疙瘩覆盖白色边线直到车身与边线平行摆正后停车</p>
+<h3 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h3><p>关闭转向灯</p>
+<p>摘档</p>
+<p>拉手刹</p>
+<p>熄火</p>
+<p>取安全带</p>
+<p>观察后视镜3秒钟以上</p>
+<p>开门下车后立马关门</p>
+<p>考试结束</p>
+<h1 id="二号线"><a href="#二号线" class="headerlink" title="二号线"></a>二号线</h1><div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <video width="136" height="240" controls style="flex-shrink: 0;">
+        <source src="https://aura.private-cloud.site:9000/public/videos/subject-three/%e7%a7%91%e4%b8%89-2%e5%8f%b7%e7%ba%bf_1.mp4" type="video/mp4">
+        当前软件不支持播放视频，建议用传统浏览器打开页面
+    </video>
+    <video width="136" height="240" controls style="flex-shrink: 0;">
+        <source src="https://aura.private-cloud.site:9000/public/videos/subject-three/%e7%a7%91%e4%b8%89-2%e5%8f%b7%e7%ba%bf_2.mp4" type="video/mp4">
+        当前软件不支持播放视频，建议用传统浏览器打开页面
+    </video>
+</div>
+
+<h3 id="出站右转弯"><a href="#出站右转弯" class="headerlink" title="出站右转弯"></a>出站右转弯</h3><p>必须停车，观察路口</p>
+<p>出停止线后不要转向，到达道路黄线位置再转向避免压线</p>
+<p>转弯后保持快车道行驶，行驶中允许停车等待但不允许去慢车道</p>
+<h3 id="右转大弯"><a href="#右转大弯" class="headerlink" title="右转大弯"></a>右转大弯</h3><p>该右转路口有专用的右转车道。观察右手边路口位置带一脚刹车</p>
+<p>即将完成转弯时避免压到将要汇入的目标车道线（痕迹不明显）。转弯后保持右侧行驶（靠着左侧虚线走，后侧边线模糊不清）</p>
+<h3 id="模糊的停止线"><a href="#模糊的停止线" class="headerlink" title="模糊的停止线"></a>模糊的停止线</h3><p>经过右转大弯后靠右直行时注意右侧印刷的停止线。路面痕迹模糊但右侧延伸处痕迹较新</p>
+<h3 id="第二条模糊的停止线"><a href="#第二条模糊的停止线" class="headerlink" title="第二条模糊的停止线"></a>第二条模糊的停止线</h3><p>继续向前经过第二条模糊的停止线。依旧参考右侧车道外延伸处的参考线</p>
+<h3 id="第三条模糊的停止线"><a href="#第三条模糊的停止线" class="headerlink" title="第三条模糊的停止线"></a>第三条模糊的停止线</h3><p>继续向前经过第三条模糊的停止线。依旧参考右侧车道外延伸处的参考线</p>
+<h3 id="第二个右转大弯"><a href="#第二个右转大弯" class="headerlink" title="第二个右转大弯"></a>第二个右转大弯</h3><p>观察右侧隔离栏，倒数第四个柱子（柱根路面有白漆）位置带一脚刹车</p>
+<p>走过右侧隔离栏后继续前进，待可以看到右转弯右侧边线时再转向沿着右侧边线走</p>
+<p>转弯后在最右侧慢车道行驶</p>
+<h3 id="直线行驶-1"><a href="#直线行驶-1" class="headerlink" title="直线行驶"></a>直线行驶</h3><p>目视前方，双手不离方向盘</p>
+<h3 id="超越前方车辆-1"><a href="#超越前方车辆-1" class="headerlink" title="超越前方车辆"></a>超越前方车辆</h3><p>先开转向灯，待转向灯闪烁5秒后再做动作。如果当前交通不具备变道条件则停车等待（必须停车等待而非继续前进）</p>
+<p>变道完成后关闭转向灯，车摆正之后立马开启右转向灯</p>
+<p>等待右转向灯闪烁5秒后观察后侧交通情况确认安全返回至右侧车道（同样如果不具备变道条件必须停车等待）</p>
+<h3 id="高速行驶-1"><a href="#高速行驶-1" class="headerlink" title="高速行驶"></a>高速行驶</h3><p>完成“超越前方车辆”项目后即可开始执行高速行驶项目</p>
+<p>将档位提升至4档（不可跳档）</p>
+<p>要求速度为45迈以上（不要超过50迈）保持5秒钟</p>
+<p>5秒钟后无需降档保持4档行驶即可，注意保持速度20迈以上（不超50迈）</p>
+<p>即使前方路口为绿灯也必须停车，停车后重新2档起步（避免过路口后依旧为4档）</p>
+<p>过了红绿灯路口后走靠近中间黄线的车道行驶</p>
+<h3 id="掉头-1"><a href="#掉头-1" class="headerlink" title="掉头"></a>掉头</h3><p>听到语音提示后留意地面掉头标志</p>
+<p>经过掉头标志后保持左转向灯开启向右变道，走到右侧车道后（注意不要压倒右侧边线）向左打死前进（不要压到对向车道边线）</p>
+<p>倒车前关闭转向灯。倒车倒至中间黄线与驾驶员平齐，随后转向前进完成掉头</p>
+<p>掉头后全程驶入快车道行驶</p>
+<h3 id="公交车站-1"><a href="#公交车站-1" class="headerlink" title="公交车站"></a>公交车站</h3><p>回程时注意路右侧的公交车站标志牌。当车头与标志牌杆的前一个路灯平齐时带下刹车</p>
+<h3 id="学校区域-1"><a href="#学校区域-1" class="headerlink" title="学校区域"></a>学校区域</h3><p>保持速度不超过30迈即可，无需做额外动作</p>
+<h3 id="前方会车-1"><a href="#前方会车-1" class="headerlink" title="前方会车"></a>前方会车</h3><p>听到电脑播报相关语音后点刹车（无需停车，无需踩离合）</p>
+<h3 id="路口左转"><a href="#路口左转" class="headerlink" title="路口左转"></a>路口左转</h3><p>该路口路面坑洼，停车等待时尽量不要停在坑洼处避免起步困难。同时路口地面并不水平，注意溜车</p>
+<p>左转后走中间车道</p>
+<h3 id="变更车道-1"><a href="#变更车道-1" class="headerlink" title="变更车道"></a>变更车道</h3><p>听到语音提示后打开左转向灯，左转向灯闪烁5秒后开始变道</p>
+<p>如果当前交通情况不允许进行变道的话必须停车等待条件合适后开始执行变道（切勿硬着头皮继续前进）</p>
+<h3 id="第二个左转路口"><a href="#第二个左转路口" class="headerlink" title="第二个左转路口"></a>第二个左转路口</h3><p>该路口处标识线不清晰。进入左侧左转车道后注意别压左侧黄线</p>
+<p>转向时建议多往前走一点再打方向避免左后方压倒停止线处不清晰的黄线</p>
+<p>左转后走中间车道</p>
+<h3 id="并线"><a href="#并线" class="headerlink" title="并线"></a>并线</h3><p>到了需要并线的位置时停车摘档（在右侧汇入车道前停车不要驶入）</p>
+<p>停车后开启左转向灯等五秒后再起步时入左侧车道</p>
+<h3 id="左转返回"><a href="#左转返回" class="headerlink" title="左转返回"></a>左转返回</h3><p>建议在左转路口的停止线前停车，确保道路安全后开启左转向灯起步左转</p>
+<p>转向后建议在左侧快车道行驶</p>
+<h3 id="停车"><a href="#停车" class="headerlink" title="停车"></a>停车</h3><p>终点牌前3～5米处停车。建议直接在快车道位置停下</p>
+<p>停车后摘档，确保安全后打开右转向（等待5秒）变道至最右侧道路（1档前进，需要加油门避免车速过慢长时间压中间虚线）</p>
+<p>经过终点牌后1档怠速行驶，观察右侧圆镜子，保持黑疙瘩覆盖白色边线直到车身与边线平行摆正后停车</p>
+<h3 id="结束-1"><a href="#结束-1" class="headerlink" title="结束"></a>结束</h3><p>关闭转向灯</p>
+<p>摘档</p>
+<p>拉手刹</p>
+<p>熄火</p>
+<p>取安全带</p>
+<p>观察后视镜3秒钟以上</p>
+<p>开门下车后立马关门</p>
+<p>考试结束</p>
+<h1 id="考试要点"><a href="#考试要点" class="headerlink" title="考试要点"></a>考试要点</h1><h3 id="鼓励停车，而非冒险"><a href="#鼓励停车，而非冒险" class="headerlink" title="鼓励停车，而非冒险"></a>鼓励停车，而非冒险</h3><p>路口有车尽量通过在路口前停车等待来避让而不是顶到路口中（路口位置不允许停车）</p>
+<h3 id="路口转向过程中别忘记关闭转向灯"><a href="#路口转向过程中别忘记关闭转向灯" class="headerlink" title="路口转向过程中别忘记关闭转向灯"></a>路口转向过程中别忘记关闭转向灯</h3><p>路口停止线前开转向（有语音提示时在语音提示后打转向），行进到路口中央时关闭转向灯</p>
+<h3 id="与前车保持距离"><a href="#与前车保持距离" class="headerlink" title="与前车保持距离"></a>与前车保持距离</h3><p>避免被前车“带节奏”从而频繁启停或者低速前进导致档位与速度不匹配或者其他不必要的问题</p>
+<h3 id="推迟转向"><a href="#推迟转向" class="headerlink" title="推迟转向"></a>推迟转向</h3><p>在进入路口或者到路口前长实线处避免过早转向以规避车体后方压线</p>
+<h3 id="转向时不要换挡"><a href="#转向时不要换挡" class="headerlink" title="转向时不要换挡"></a>转向时不要换挡</h3><p>转向通常意味着刚起步此时是2档，待转向完成后再升3档</p>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> 科目三考试要点</li>
+        <li><strong>作者:</strong> wxh</li>
+        <li><strong>创建于
+                :</strong> 2025-12-22 12:22:01</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-03-25 20:36:45
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://blog.private-cloud.site/2025/12/22/科目三考试要点/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E6%97%A5%E5%B8%B8/">#日常</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E9%A9%BE%E8%80%83/">#驾考</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2025/12/24/WordPress%E7%AB%99%E7%82%B9%E6%90%AD%E5%BB%BA%E6%95%99%E7%A8%8B/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">Docker 搭建 WordPress 站点教程</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2025/10/11/%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">基于AI的语音合成软件</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://waline.private-cloud.site',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+                    lang: 'zh-CN',
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">科目三考试要点</div>
+		<ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%80%83%E8%AF%95%E9%A1%BB%E7%9F%A5"><span class="nav-text">考试须知</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E8%BD%A6"><span class="nav-text">上车</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%B7%E6%AD%A5"><span class="nav-text">起步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%8C%E8%BF%9B%E8%BF%87%E7%A8%8B"><span class="nav-text">行进过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%9C%E6%AD%A2"><span class="nav-text">停止</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%81%AF%E5%85%89%E8%80%83%E8%AF%95"><span class="nav-text">灯光考试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E6%8B%9F%E8%80%83%E8%AF%95"><span class="nav-text">模拟考试</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E5%8F%B7%E7%BA%BF"><span class="nav-text">一号线</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%B7%A6%E8%BD%AC%E5%BC%AF%E8%B7%AF%E5%8F%A3"><span class="nav-text">第一个左转弯路口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%AC%E4%BA%A4%E8%BD%A6%E7%AB%99"><span class="nav-text">公交车站</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E6%A0%A1%E5%8C%BA%E5%9F%9F"><span class="nav-text">学校区域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E6%96%B9%E4%BC%9A%E8%BD%A6"><span class="nav-text">前方会车</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%AF%E5%8F%A3%E9%95%BF%E5%AE%9E%E7%BA%BF%E5%89%8D%E7%9A%84%E8%99%9A%E7%BA%BF"><span class="nav-text">路口长实线前的虚线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B4%E7%BA%BF%E8%A1%8C%E9%A9%B6"><span class="nav-text">直线行驶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%85%E8%B6%8A%E5%89%8D%E6%96%B9%E8%BD%A6%E8%BE%86"><span class="nav-text">超越前方车辆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E9%81%93%E8%87%B3%E5%BF%AB%E8%BD%A6%E9%81%93"><span class="nav-text">变道至快车道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E9%80%9F%E8%A1%8C%E9%A9%B6"><span class="nav-text">高速行驶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%89%E5%A4%B4"><span class="nav-text">掉头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E6%9B%B4%E8%BD%A6%E9%81%93"><span class="nav-text">变更车道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E4%BD%8D%E8%BD%A6%E9%81%93%E8%B7%AF%E5%8F%A3"><span class="nav-text">错位车道路口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%B3%E8%BD%AC"><span class="nav-text">右转</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%94%E5%9B%9E"><span class="nav-text">返回</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9D%9F"><span class="nav-text">结束</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E5%8F%B7%E7%BA%BF"><span class="nav-text">二号线</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BA%E7%AB%99%E5%8F%B3%E8%BD%AC%E5%BC%AF"><span class="nav-text">出站右转弯</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%B3%E8%BD%AC%E5%A4%A7%E5%BC%AF"><span class="nav-text">右转大弯</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E7%B3%8A%E7%9A%84%E5%81%9C%E6%AD%A2%E7%BA%BF"><span class="nav-text">模糊的停止线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%9D%A1%E6%A8%A1%E7%B3%8A%E7%9A%84%E5%81%9C%E6%AD%A2%E7%BA%BF"><span class="nav-text">第二条模糊的停止线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%9D%A1%E6%A8%A1%E7%B3%8A%E7%9A%84%E5%81%9C%E6%AD%A2%E7%BA%BF"><span class="nav-text">第三条模糊的停止线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E5%8F%B3%E8%BD%AC%E5%A4%A7%E5%BC%AF"><span class="nav-text">第二个右转大弯</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B4%E7%BA%BF%E8%A1%8C%E9%A9%B6-1"><span class="nav-text">直线行驶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%85%E8%B6%8A%E5%89%8D%E6%96%B9%E8%BD%A6%E8%BE%86-1"><span class="nav-text">超越前方车辆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E9%80%9F%E8%A1%8C%E9%A9%B6-1"><span class="nav-text">高速行驶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%89%E5%A4%B4-1"><span class="nav-text">掉头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%AC%E4%BA%A4%E8%BD%A6%E7%AB%99-1"><span class="nav-text">公交车站</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E6%A0%A1%E5%8C%BA%E5%9F%9F-1"><span class="nav-text">学校区域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E6%96%B9%E4%BC%9A%E8%BD%A6-1"><span class="nav-text">前方会车</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%AF%E5%8F%A3%E5%B7%A6%E8%BD%AC"><span class="nav-text">路口左转</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E6%9B%B4%E8%BD%A6%E9%81%93-1"><span class="nav-text">变更车道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E5%B7%A6%E8%BD%AC%E8%B7%AF%E5%8F%A3"><span class="nav-text">第二个左转路口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B6%E7%BA%BF"><span class="nav-text">并线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A6%E8%BD%AC%E8%BF%94%E5%9B%9E"><span class="nav-text">左转返回</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%9C%E8%BD%A6"><span class="nav-text">停车</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9D%9F-1"><span class="nav-text">结束</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%80%83%E8%AF%95%E8%A6%81%E7%82%B9"><span class="nav-text">考试要点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BC%93%E5%8A%B1%E5%81%9C%E8%BD%A6%EF%BC%8C%E8%80%8C%E9%9D%9E%E5%86%92%E9%99%A9"><span class="nav-text">鼓励停车，而非冒险</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%AF%E5%8F%A3%E8%BD%AC%E5%90%91%E8%BF%87%E7%A8%8B%E4%B8%AD%E5%88%AB%E5%BF%98%E8%AE%B0%E5%85%B3%E9%97%AD%E8%BD%AC%E5%90%91%E7%81%AF"><span class="nav-text">路口转向过程中别忘记关闭转向灯</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8E%E5%89%8D%E8%BD%A6%E4%BF%9D%E6%8C%81%E8%B7%9D%E7%A6%BB"><span class="nav-text">与前车保持距离</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E8%BF%9F%E8%BD%AC%E5%90%91"><span class="nav-text">推迟转向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AC%E5%90%91%E6%97%B6%E4%B8%8D%E8%A6%81%E6%8D%A2%E6%8C%A1"><span class="nav-text">转向时不要换挡</span></a></li></ol></li></ol></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2025</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">wxh</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 20 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.5</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/Swup.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupSlideTheme.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupScriptsPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupProgressPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupScrollPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/SwupPreloadPlugin.min.js" ></script>
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/imageViewer.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/utils.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/main.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/navbarShrink.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/scrollTopBottom.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/lightDarkSwitch.js" ></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/categoryList.js" ></script>
+
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/codeBlock.js" ></script>
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/lazyload.js" ></script>
+
+
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/runtime.js" ></script>
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/odometer.min.js" ></script>
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/assets/odometer-theme-minimal.css">
+
+
+
+  <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/Typed.min.js" ></script>
+  <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/plugins/typed.js" ></script>
+
+
+
+
+
+
+
+
+
+
+    <script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/tools/tocToggle.js" data-swup-reload-script></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/toc.js" data-swup-reload-script></script><script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/plugins/tabs.js" data-swup-reload-script></script>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/libs/moment-with-locales.min.js" data-swup-reload-script></script>
+<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.8.5/source/js/build/layouts/essays.js" data-swup-reload-script></script>
+
+
+
+
+	
+</body>
+
+</html>
