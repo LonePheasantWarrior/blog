@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    
+    <meta name="author" content="wxh">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes ASAP (before DOMContentLoaded)
+            (function() {
+                const addBodyClass = () => {
+                    const b = document.body;
+                    if (!b) return false;
+                    b.classList.add(theme + "-mode");
+                    return true;
+                };
+
+                // Try immediately
+                if (addBodyClass()) return;
+
+                // Observe until body exists
+                const mo = new MutationObserver(() => {
+                    if (addBodyClass()) mo.disconnect();
+                });
+                mo.observe(document.documentElement, { childList: true, subtree: true });
+            })();
+        })();
+    </script>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+        
+        
+        
+            <link rel="preconnect" href="https://evan.beee.top" crossorigin>
+        
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://blog.private-cloud.site/2026/11/01/olap场景相关概念与产品/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+        
+        <meta name="description" content="晓虎的博客 —— 无限思考，无限进步，无限创造。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作">
+<meta property="og:url" content="https://blog.private-cloud.site/2026/11/01/OLAP%E5%9C%BA%E6%99%AF%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%B8%8E%E4%BA%A7%E5%93%81/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="晓虎的博客 —— 无限思考，无限进步，无限创造。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.private-cloud.site/images/banner_light_wuxia.webp">
+<meta property="article:published_time" content="2026-10-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-01T14:41:52.235Z">
+<meta property="article:author" content="wxh">
+<meta property="article:tag" content="Apache Doris">
+<meta property="article:tag" content="Apache SeaTunnel">
+<meta property="article:tag" content="CDC">
+<meta property="article:tag" content="Flink">
+<meta property="article:tag" content="HDFS">
+<meta property="article:tag" content="Hadoop">
+<meta property="article:tag" content="MapReduce">
+<meta property="article:tag" content="OLAP">
+<meta property="article:tag" content="Spark">
+<meta property="article:tag" content="大数据">
+<meta property="article:tag" content="数据集成">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.private-cloud.site/images/banner_light_wuxia.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/favicon.webp" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.webp">
+    <meta name="theme-color" content="#A4503B">
+    <link rel="shortcut icon" href="/images/favicon.webp">
+    <!--- Page Info-->
+    
+    <title>
+        
+            从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作 | 晓虎的博客
+        
+    </title>
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/Chillax/chillax.css">
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/css/build/tailwind.css">
+    
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/GeistMono/geist-mono.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/Geist/geist.css">
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/anime.min.js" ></script>
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"blog.private-cloud.site","root":"/","language":"zh-CN","path":"search.json"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A4503B","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":true},"scroll_progress":{"bar":true,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":true,"custom_message":"欢迎访问我的小窝"},"side_tools":{"gear_rotation":true,"auto_expand":true},"open_graph":{"enable":true,"image":"/images/banner_light_wuxia.webp","description":"晓虎的博客 —— 无限思考，无限进步，无限创造。"},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"static","image":{"light":"images/banner_light_wuxia.webp","dark":"images/banner_dark2.webp"},"title":"晓虎的博客","subtitle":{"text":["无限思考","无限进步","无限创造"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"style":"default","links":[{"icon":"fa-brands fa-github","url":"https://github.com/LonePheasantWarrior"},{"icon":"fa-brands fa-twitter","url":null},{"icon":"fa-solid fa-at","url":null},{"icon":"fa-brands fa-telegram","url":null},{"icon":"","url":null}],"qrs":[{"icon":"fa-brands fa-weixin","qr":null},{"icon":"/images/custom-icon.svg","qr":null}]}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1","theme":{"light":"default","dark":"dark"}}},"version":"2.9.0","navbar":{"auto_hide":true,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}},"search":{"enable":true,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur","masonry":{"batch_size":12,"initial_batch_size":24}},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":"欢迎访问我的小窝","show_on_mobile":true,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}}},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footer":{"runtime":true,"icon":"<i class=\"fa-solid fa-heart fa-beat\" style=\"--fa-animation-duration: 0.5s; color: #f54545\"></i>","start":"2025/3/18 12:00:01","statistics":true,"customize":"无限思考 · 无限进步 · 无限创造","icp":{"enable":false,"number":null,"url":null}},"footerStart":"2025/3/18 12:00:01","mermaid":{"style":{"light":"default","dark":"dark"}}};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.i18n = {"search":"站内搜索您需要的内容...","toc":"目录","prev":"上一页","next":"下一页","prev_posts":"上一篇","next_posts":"下一篇","page":"第 %d 页","recent_posts":"最新文章","share":"分享","powered_by":"由 %s 驱动","theme":"主题","rss_feed":"RSS Feed","category":"分类","categories":"分类","tag":"标签","tags":"标签","post":"文章","posts":"文章","tagcloud":"标签云","comment":"评论","comments":"评论","top":"置顶","sticky":"置顶","go-back-home":"回到首页","masonry_loading":"照片加载中...","image_viewer":"图片查看器","close":"关闭","exif":{"title":"EXIF","cards":{"camera":"相机","lens":"镜头","exposure":"曝光","other":"其他"},"fields":{"make":"品牌","model":"机型","date_taken":"拍摄时间","lens_model":"镜头","focal_length":"焦距","focus_mode":"对焦模式","shutter":"快门","aperture":"光圈","iso":"感光度","exposure_program":"曝光程序","exposure_compensation":"曝光补偿","metering_mode":"测光模式","flash":"闪光灯","white_balance":"白平衡","latitude":"纬度","longitude":"经度","altitude":"海拔"},"status":{"loading":"加载中...","no_exif":"无 EXIF 信息","library_missing":"EXIF 库未加载","image_source_missing":"图片地址不可用","unavailable":"EXIF 不可用（可能被 CORS 阻止或缺少元数据）","flag_unavailable":"EXIF 不可用"}},"home":"首页","archive":"归档","archives":"归档","about":"关于","links":"链接","link":"链接","friends":"友情链接","friend":"友情链接","timeline":"时间轴","shuoshuo":"说说","bookmarks":"书签","site_uv":"访问人数","site_pv":"总访问量","read_more":"阅读全文","wordcount":"字","min2read":"分钟","changelog":"更新日志","status":"状态","runtime":"博客已运行","days":"天","hours":"小时","minutes":"分钟","seconds":"秒","optimized_by":"并由 Evan 进行优化","rights":"版权所有","site_posts":"共撰写了 %s 篇文章","site_wordcount":"共 %s 字","copyright":{"title":"标题","author":"作者","link":"链接","create_time":"创建于","update_time":"更新于","license_title":"版权声明","license_content":"本文章采用 %s 进行许可。","all_rights_reserved":"版权所有 &#169 %s，禁止转载。","public_domain":"本文为公有领域作品，可自由转载、引用。"},"ago":{"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"},"create_time":"创建","update_time":"更新","expired":"这篇文章最后更新于 %s 天前，内容可能已经过时。"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/fontawesome.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/brands.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/solid.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/regular.min.css">
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.1.2"><script defer src="https://photon.private-cloud.site:3000/script.js" data-website-id="ad63bf5f-4eef-43bb-9fc3-b64cdef14089"></script><script defer src="https://photon.private-cloud.site:3000/recorder.js" data-website-id="ad63bf5f-4eef-43bb-9fc3-b64cdef14089"></script></head>
+
+
+<body>
+	<div class="progress-bar-container">
+	
+	<span class="scroll-progress-bar"></span>
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        欢迎访问我的小窝
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/favicon.webp" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                晓虎的博客
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-regular fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/categories"
+                                        >
+                                    <i class="fa-regular fa-folder fa-fw"></i>
+                                    分类
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/essays"
+                                        >
+                                    <i class="fa-regular fa-pen fa-fw"></i>
+                                    ESSAYS
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-regular fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/categories"
+                        >
+                            <span>
+                                分类
+                            </span>
+                            
+                                <i class="fa-regular fa-folder fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/essays"
+                        >
+                            <span>
+                                ESSAYS
+                            </span>
+                            
+                                <i class="fa-regular fa-pen fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+                
+                    
+                    
+                    
+                    
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">54</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">21</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] shrink-0 rounded-medium border border-border-color p-px">
+				<img src="/images/avatar.webp">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">wxh</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-11-01</span>
+        <span class="mobile">2026-11-01</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-11-01 22:41:52</span>
+            <span class="mobile">2026-11-01 22:41:52</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/IT/">IT</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/">大数据</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%88%90/">数据集成</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/OLAP/">OLAP</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Hadoop/">Hadoop</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/HDFS/">HDFS</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/MapReduce/">MapReduce</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Spark/">Spark</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Flink/">Flink</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/CDC/">CDC</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Apache-SeaTunnel/">Apache SeaTunnel</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Apache-Doris/">Apache Doris</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+        <span class="article-wordcount article-meta-item">
+            <i class="fa-regular fa-typewriter"></i>&nbsp;<span>14k 字</span>
+        </span>
+    
+    
+        <span class="article-min2read article-meta-item">
+            <i class="fa-regular fa-clock"></i>&nbsp;<span>50 分钟</span>
+        </span>
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<blockquote>
+<p><strong>这是一篇给大数据入门者看的“看懂运行原理”笔记。</strong> 我们不急着背产品名称，而是先弄明白：它是什么软件？安装在哪里？启动后有哪些进程？数据是怎样从一台机器跑到另一台机器的？以及，什么时候才值得使用它？</p>
+<p>阅读时可以一直带着一个画面：<strong>几台装了 Linux 的普通服务器、一些运行中的程序，以及在它们之间流动的数据。</strong> 大数据系统并没有神秘到脱离这些东西。</p>
+</blockquote>
+<h3 id="阅读路线：这篇文章很长，但不需要一次读完"><a href="#阅读路线：这篇文章很长，但不需要一次读完" class="headerlink" title="阅读路线：这篇文章很长，但不需要一次读完"></a>阅读路线：这篇文章很长，但不需要一次读完</h3><p>本文围绕一条数据链路展开，<strong>并不要求读者提前掌握 Linux 集群或大数据经验</strong>。第一次阅读可以按下面的路线走：</p>
+<ul>
+<li><strong>想看清“分布式软件到底长什么样”</strong>：先读第 2～9 节，重点是 Hadoop、HDFS、YARN、MapReduce、Spark、Flink 的进程与协作。</li>
+<li><strong>想理解“怎样把数据拿过来”</strong>：读第 10～12 节，认识 SeaTunnel、DataX、NiFi、Kafka 与 CDC。</li>
+<li><strong>想理解“数据放哪里、怎样查得快”</strong>：读第 13～14 节，认识文件系统、数据湖和 OLAP 数据库。</li>
+<li><strong>正在做真实项目</strong>：重点看第 15～18 节的断点恢复、业务正确性和 PoC。</li>
+</ul>
+<p>每个产品都尽量回答同样的四件事：<strong>它是什么、运行什么进程、数据如何流动、适合什么工作</strong>。文中的文字架构图用于解释角色，不是可以直接照搬的生产部署拓扑。</p>
+<hr>
+<h2 id="1-为什么突然要学习这些东西？从一次医疗数据抽取说起"><a href="#1-为什么突然要学习这些东西？从一次医疗数据抽取说起" class="headerlink" title="1. 为什么突然要学习这些东西？从一次医疗数据抽取说起"></a>1. 为什么突然要学习这些东西？从一次医疗数据抽取说起</h2><p>我过去主要做 Java 后端，习惯了 MySQL、Oracle、Spring Boot 这样的技术组合。接到需求后，写接口、查数据库、处理业务，再返回结果，这套思路很熟悉。</p>
+<p>后来参与一个医疗专病研究平台，情况变了：医院的数据总量达到亿级，目标是筛选约 <strong>18 万名患者</strong>及其历史诊断、就诊和检验数据。一位患者可能有多次就诊，每次就诊又对应许多检验报告和明细。原本看似不大的患者数量，展开后便是大量的医疗事实。</p>
+<p>源数据库是一份截至 <strong>2025 年年底</strong>的 Oracle 11g 只读历史镜像。部分源表缺少合适的索引，医院内网连接也不稳定，抽取过程中还反复遇到 <code>Connection reset</code>。</p>
+<p>最开始尝试自己在 Java 中实现分页、并行读取、重试和断点续传，结果花了大量时间处理那些与医疗业务无关、却又绝不能做错的基础设施问题。后来先用 Python 脚本完成了这一轮历史数据导入，再将数据整理到 MySQL 中供后续检索使用。</p>
+<p>这让我产生了一个问题：<strong>既然大数据行业已经发展这么多年，难道这些采集、传输、计算、存储的能力，还需要每个项目从头写一遍吗？</strong></p>
+<p>答案显然不是。但另一个极端也不对：看到“分布式”“实时”“亿级”就把 Hadoop、Kafka、Flink 全装上，系统可能会比原先更难维护。</p>
+<p>所以，这篇文章不打算做“产品名称大全”，而是从软件如何运行的角度，把这些工具真正串起来。</p>
+<blockquote>
+<p>说明：文中的项目背景用于解释工程问题，不涉及真实患者数据。后文提到的 V2 抽取方案是设计思路，不能当作已实现、已测试的能力。</p>
+</blockquote>
+<hr>
+<h2 id="2-先建立一个画面：大数据系统到底长什么样？"><a href="#2-先建立一个画面：大数据系统到底长什么样？" class="headerlink" title="2. 先建立一个画面：大数据系统到底长什么样？"></a>2. 先建立一个画面：大数据系统到底长什么样？</h2><h3 id="2-1-它的本质还是一些普通的软件进程"><a href="#2-1-它的本质还是一些普通的软件进程" class="headerlink" title="2.1 它的本质还是一些普通的软件进程"></a>2.1 它的本质还是一些普通的软件进程</h3><p>想象我们有三台服务器：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">                  局域网</span><br><span class="line">                     │</span><br><span class="line">     ┌───────────────┼───────────────┐</span><br><span class="line">     │               │               │</span><br><span class="line">服务器 A          服务器 B          服务器 C</span><br><span class="line">Linux             Linux             Linux</span><br><span class="line">CPU / 内存 / 磁盘   CPU / 内存 / 磁盘   CPU / 内存 / 磁盘</span><br><span class="line">     │               │               │</span><br><span class="line"> 某些服务进程      某些服务进程      某些服务进程</span><br><span class="line">     └───────────────┼───────────────┘</span><br><span class="line">                 网络通信</span><br></pre></td></tr></table></figure></div>
+
+<p>一套分布式系统，通常就是把不同的<strong>服务进程</strong>部署在这些机器上，再让它们通过网络协作。</p>
+<p>例如你熟悉的 Spring Boot：启动一个 JAR，操作系统里就出现一个 Java 进程，它监听端口、访问数据库、处理请求。大数据软件并没有脱离这个模型，只是<strong>同一套软件可能需要启动多种不同角色的进程</strong>。</p>
+<p>有些角色负责管理，有些角色负责真正读写数据或执行计算。于是，你会反复遇到 <strong>Master&#x2F;Worker、Coordinator&#x2F;Executor、Frontend&#x2F;Backend</strong> 等词。</p>
+<p>这些词常常表示“协调者”和“执行者”，但<strong>不同产品的名字、职责以及高可用设计并不完全一样</strong>。</p>
+<h3 id="2-2-一定要区分四个层次"><a href="#2-2-一定要区分四个层次" class="headerlink" title="2.2 一定要区分四个层次"></a>2.2 一定要区分四个层次</h3><table>
+<thead>
+<tr>
+<th>听到的词</th>
+<th>它可能是什么</th>
+<th>可以怎样理解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>概念或算法</strong></td>
+<td>OLAP、CDC、Map&#x2F;Reduce 思想、幂等</td>
+<td>一种做事的方法，不一定有独立程序</td>
+</tr>
+<tr>
+<td><strong>软件项目</strong></td>
+<td>Hadoop、Spark、Flink、Doris</td>
+<td>可下载安装的代码、服务、库或工具集合</td>
+</tr>
+<tr>
+<td><strong>进程 &#x2F; 服务角色</strong></td>
+<td>NameNode、DataNode、JobManager、BE</td>
+<td>软件启动后实际运行的某类服务</td>
+</tr>
+<tr>
+<td><strong>一次任务</strong></td>
+<td>MapReduce Job、Spark Job、SeaTunnel 同步 Job</td>
+<td>用户提交的一次具体工作，有开始和结束，或持续运行</td>
+</tr>
+</tbody></table>
+<p><strong>“某产品用 Java 开发”也不等于“它在每台机器上只启动一个 Java 程序”。</strong> 有的产品由多个 JVM 进程组成，有的核心服务是 C++ 程序，还有的工具只是库或命令行客户端。</p>
+<p>再记住三个小词：</p>
+<ul>
+<li><strong>节点（Node）</strong>：通常指一台服务器或虚拟机；在容器化部署中，也要注意区分节点、容器和进程。</li>
+<li><strong>集群（Cluster）</strong>：一组共同提供服务的节点和进程。不是把机器放进同一个机柜就自动变成集群。</li>
+<li><strong>任务（Task）</strong>：一次作业被拆分出来的执行单元。一台机器上可以同时运行多个 Task。</li>
+</ul>
+<h3 id="2-3-一条数据链路：采集、传输、存储、计算、分析"><a href="#2-3-一条数据链路：采集、传输、存储、计算、分析" class="headerlink" title="2.3 一条数据链路：采集、传输、存储、计算、分析"></a>2.3 一条数据链路：采集、传输、存储、计算、分析</h3><p>先画一张总图：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Oracle / MySQL / 文件 / 日志 / API</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">         ① 采集 Ingestion</span><br><span class="line">     （把数据从源头取出来）</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">         ② 传输 Transport</span><br><span class="line">     （把数据稳定地送往下游）</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">         ③ 存储 Storage</span><br><span class="line">     （把数据保存下来）</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">         ④ 计算 Processing</span><br><span class="line">     （清洗、关联、转换、聚合）</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">         ⑤ 分析 Analytics</span><br><span class="line">     （查询、报表、筛选、研究）</span><br></pre></td></tr></table></figure></div>
+
+<p>这只是为了学习而画的<strong>逻辑链路</strong>。真实系统会交叉：采集时可以进行转换，计算结果还会写回存储，分析型数据库自己也负责计算。</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>先记住的代表产品</th>
+<th>核心问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>采集</td>
+<td>DataX、SeaTunnel、NiFi、Debezium</td>
+<td>从哪里取数据，怎么识别变化</td>
+</tr>
+<tr>
+<td>传输</td>
+<td>Kafka、Pulsar</td>
+<td>上下游速度不一样，怎么办</td>
+</tr>
+<tr>
+<td>存储</td>
+<td>MySQL、HDFS、对象存储、数据湖表格式</td>
+<td>数据如何可靠保存</td>
+</tr>
+<tr>
+<td>计算</td>
+<td>MapReduce、Spark、Flink</td>
+<td>如何让多台机器一起处理</td>
+</tr>
+<tr>
+<td>分析</td>
+<td>Doris、ClickHouse、Hive、Trino</td>
+<td>如何让大范围查询足够快</td>
+</tr>
+</tbody></table>
+<p>下面从最容易在脑海里画出来的 Hadoop 开始。</p>
+<h3 id="2-4-ETL-与-ELT：先处理再存，还是先存再处理？"><a href="#2-4-ETL-与-ELT：先处理再存，还是先存再处理？" class="headerlink" title="2.4 ETL 与 ELT：先处理再存，还是先存再处理？"></a>2.4 ETL 与 ELT：先处理再存，还是先存再处理？</h3><p>另外两个常见词是 <strong>ETL</strong> 和 <strong>ELT</strong>。它们描述数据集成与加工的顺序，而不是两款必须安装的软件。</p>
+<ul>
+<li><strong>ETL（Extract → Transform → Load）</strong>：先抽取，再转换，最后写入目标。例如先把来源系统的单位、代码转换成统一格式，再写入研究库。</li>
+<li><strong>ELT（Extract → Load → Transform）</strong>：先抽取并加载到受控存储，再用数据库或计算引擎加工。例如把经过授权的原始字段保存到暂存层，再用 SQL 或 Java 规范化。</li>
+</ul>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ETL：Oracle → 抽取 → Java/Spark 转换 → 分析库</span><br><span class="line">ELT：Oracle → 抽取 → 暂存区 → SQL/计算引擎转换</span><br></pre></td></tr></table></figure></div>
+
+<p>实际项目经常混用两者：进入暂存区前先做必要脱敏、格式校验，之后继续完成复杂标准化。<strong>ETL&#x2F;ELT 描述流程安排，不规定你必须使用 Spark 或某个特定产品。</strong></p>
+<hr>
+<h2 id="3-Hadoop-到底是个什么东西？"><a href="#3-Hadoop-到底是个什么东西？" class="headerlink" title="3. Hadoop 到底是个什么东西？"></a>3. Hadoop 到底是个什么东西？</h2><h3 id="3-1-首先，它确实是一套软件，不仅仅是“思路”"><a href="#3-1-首先，它确实是一套软件，不仅仅是“思路”" class="headerlink" title="3.1 首先，它确实是一套软件，不仅仅是“思路”"></a>3.1 首先，它确实是一套软件，不仅仅是“思路”</h3><p><strong>Apache Hadoop 是一个真实存在、可以下载、安装、配置、启动的开源软件项目。</strong> 它由多个模块构成，而它背后的设计思想是：<strong>将大量普通机器组织起来，共同承担存储与计算。</strong></p>
+<p>所以，说它是一种“思路”是在解释思想；说它是“一套软件”是在描述实际形态。二者都对，但对于初学者，<strong>应该先把它想象成一套可以部署的 Java 软件和相关组件</strong>。</p>
+<p>Hadoop 传统核心包括：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>负责什么</th>
+<th>是否有实际运行的服务</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>HDFS</strong></td>
+<td>分布式文件存储</td>
+<td>有，如 NameNode、DataNode</td>
+</tr>
+<tr>
+<td><strong>YARN</strong></td>
+<td>管理集群计算资源</td>
+<td>有，如 ResourceManager、NodeManager</td>
+</tr>
+<tr>
+<td><strong>MapReduce</strong></td>
+<td>批量并行计算框架</td>
+<td>有实际计算进程，但在 YARN 模式下通常按作业启动</td>
+</tr>
+<tr>
+<td><strong>Hadoop Common</strong></td>
+<td>共享的 Java 库、工具和配置</td>
+<td>主要是公共基础模块，不是必须独立常驻的一个服务</td>
+</tr>
+</tbody></table>
+<p>可以这样理解：<strong>HDFS 是仓库，YARN 管人力和机器资源，MapReduce 是一种安排工人做批量计算的方法。</strong></p>
+<h3 id="3-2-一套简化的-Hadoop-集群长什么样？"><a href="#3-2-一套简化的-Hadoop-集群长什么样？" class="headerlink" title="3.2 一套简化的 Hadoop 集群长什么样？"></a>3.2 一套简化的 Hadoop 集群长什么样？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">                  Hadoop 集群（逻辑示意）</span><br><span class="line"></span><br><span class="line">管理节点 A                      工作节点 B           工作节点 C</span><br><span class="line">┌────────────────────┐        ┌─────────────┐     ┌─────────────┐</span><br><span class="line">│ NameNode（HDFS）    │        │ DataNode    │     │ DataNode    │</span><br><span class="line">│ ResourceManager     │        │ NodeManager │     │ NodeManager │</span><br><span class="line">└──────────┬─────────┘        └──────┬──────┘     └──────┬──────┘</span><br><span class="line">           │                         │                   │</span><br><span class="line">           └──────────网络────────────┴───────────────────┘</span><br><span class="line">                   │                         │</span><br><span class="line">             管理文件位置              存放文件块、运行任务</span><br></pre></td></tr></table></figure></div>
+
+<p>这张图是<strong>教学简化图，不是生产推荐部署方案</strong>。生产环境通常还会配置高可用、独立管理节点、多个工作节点以及安全认证。</p>
+<p>特别注意：<strong>HDFS 和 YARN 是两套不同的服务体系</strong>。它们可以部署在同一批服务器上，但“存储节点”和“计算节点”并不必须完全重合。</p>
+<hr>
+<h2 id="4-HDFS：到底是哪几个-Java-程序在存文件？"><a href="#4-HDFS：到底是哪几个-Java-程序在存文件？" class="headerlink" title="4. HDFS：到底是哪几个 Java 程序在存文件？"></a>4. HDFS：到底是哪几个 Java 程序在存文件？</h2><h3 id="4-1-HDFS-是什么？"><a href="#4-1-HDFS-是什么？" class="headerlink" title="4.1 HDFS 是什么？"></a>4.1 HDFS 是什么？</h3><p><strong>HDFS（Hadoop Distributed File System）是一套分布式文件系统软件</strong>。你可以像操作普通文件系统一样读写文件，但文件的实际内容可能分散在多台服务器磁盘上。</p>
+<p>它的核心实现基于 Java。典型部署中会运行两类主要的 JVM 服务：</p>
+<ul>
+<li><strong>NameNode</strong>：掌管“文件目录和文件块在哪里”的信息；</li>
+<li><strong>DataNode</strong>：负责把真正的文件块保存到本机磁盘，并响应客户端读写。</li>
+</ul>
+<h3 id="4-2-谁在管文件？谁在保存文件？"><a href="#4-2-谁在管文件？谁在保存文件？" class="headerlink" title="4.2 谁在管文件？谁在保存文件？"></a>4.2 谁在管文件？谁在保存文件？</h3><p>比如要保存一个大文件 <code>lab-2025.csv</code>。在简化示例中，把它分为 A、B、C 三块：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">          NameNode（文件管理员）</span><br><span class="line">    /data/lab-2025.csv → [A, B, C]</span><br><span class="line">                   │</span><br><span class="line">       记录每个 Block 的位置</span><br><span class="line">                   │</span><br><span class="line">    ┌──────────────┼──────────────┐</span><br><span class="line">    ▼              ▼              ▼</span><br><span class="line">DataNode 1     DataNode 2     DataNode 3</span><br><span class="line">保存 A、B       保存 B、C       保存 A、C</span><br></pre></td></tr></table></figure></div>
+
+<p>这里为方便理解，画的是“多个数据块拥有多个副本”。块大小与副本数都可以配置；在某些经典部署中，<strong>128 MiB 块大小、3 副本</strong>是常见选择，但并非所有版本和集群的固定值。</p>
+<p><strong>NameNode 主要保存元数据，不是把全部文件内容搬到自己内存里再转发。</strong> 这点很重要，否则 NameNode 很容易成为每次读写都必须经过的超级瓶颈。</p>
+<h3 id="4-3-走一遍上传文件的过程"><a href="#4-3-走一遍上传文件的过程" class="headerlink" title="4.3 走一遍上传文件的过程"></a>4.3 走一遍上传文件的过程</h3><p>假设客户端要上传一个 500 MiB 的文件，以下是简化后的步骤：</p>
+<ol>
+<li><strong>问 NameNode</strong>：客户端要创建 <code>/data/lab-2025.csv</code>，NameNode 检查路径、权限，并决定数据块应放在哪里。</li>
+<li><strong>切成 Block</strong>：客户端按文件系统配置，将文件组织成多个数据块。</li>
+<li><strong>直接写 DataNode</strong>：客户端将数据写给指定的 DataNode，副本通常通过 DataNode 之间的流水线复制完成。</li>
+<li><strong>报告进度</strong>：DataNode 定期向 NameNode 报告存活状态和块信息，NameNode维护数据块位置与副本情况。</li>
+</ol>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">客户端 ──询问“写到哪里”──▶ NameNode</span><br><span class="line">  │                            │</span><br><span class="line">  ◀──────返回节点位置──────────┘</span><br><span class="line">  │</span><br><span class="line">  └────数据流────▶ DataNode 1 ──副本流水线──▶ DataNode 2 ──▶ DataNode 3</span><br></pre></td></tr></table></figure></div>
+
+<p>读取时类似：客户端先问 NameNode 文件块在哪里，然后<strong>直接从相应的 DataNode 读取内容</strong>。</p>
+<h3 id="4-4-坏了一台服务器会怎样？"><a href="#4-4-坏了一台服务器会怎样？" class="headerlink" title="4.4 坏了一台服务器会怎样？"></a>4.4 坏了一台服务器会怎样？</h3><p>NameNode 会通过心跳及块报告发现某个 DataNode 不可用。只要对应块还有健康副本，客户端通常还能从其他节点读取数据，系统还可以按策略补足副本。</p>
+<p>但要区分两种故障：</p>
+<ul>
+<li><strong>DataNode 坏了</strong>：主要影响局部数据副本与可用容量。</li>
+<li><strong>NameNode 坏了</strong>：如果只有一个 NameNode，元数据服务可能不可用；生产环境需要考虑 Active&#x2F;Standby 等高可用方案。</li>
+</ul>
+<p>另外，<strong>副本不是备份的同义词</strong>。误删除、权限误操作、软件 Bug 仍可能影响所有副本，重要数据还需要备份、快照和恢复策略。</p>
+<h3 id="4-5-HDFS-跟平时使用的磁盘有什么区别？"><a href="#4-5-HDFS-跟平时使用的磁盘有什么区别？" class="headerlink" title="4.5 HDFS 跟平时使用的磁盘有什么区别？"></a>4.5 HDFS 跟平时使用的磁盘有什么区别？</h3><p>HDFS 比较适合顺序读写<strong>大文件</strong>，而不是把它当成高并发事务数据库。它通常不适合直接承载海量细小文件，也不提供 MySQL 那样的 SQL 事务能力。</p>
+<p><strong>记住一句话：HDFS 是跨机器保存文件的系统，不是一个数据库。</strong></p>
+<hr>
+<h2 id="5-YARN：让不同计算程序共享一批服务器"><a href="#5-YARN：让不同计算程序共享一批服务器" class="headerlink" title="5. YARN：让不同计算程序共享一批服务器"></a>5. YARN：让不同计算程序共享一批服务器</h2><h3 id="5-1-YARN-是什么软件？"><a href="#5-1-YARN-是什么软件？" class="headerlink" title="5.1 YARN 是什么软件？"></a>5.1 YARN 是什么软件？</h3><p><strong>YARN（Yet Another Resource Negotiator）是 Hadoop 的集群资源管理系统</strong>。它也是能安装、启动的服务体系，核心组件用 Java 实现。</p>
+<p>假设同一批服务器要运行十个计算任务。如果大家都抢 CPU 和内存，机器可能被挤爆。YARN 的作用就是协调“谁能在哪台机器上用多少资源”。</p>
+<h3 id="5-2-启动后有哪些角色？"><a href="#5-2-启动后有哪些角色？" class="headerlink" title="5.2 启动后有哪些角色？"></a>5.2 启动后有哪些角色？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">            ResourceManager</span><br><span class="line">         （全局资源协调者）</span><br><span class="line">                   │</span><br><span class="line">      ┌────────────┼────────────┐</span><br><span class="line">      ▼            ▼            ▼</span><br><span class="line"> NodeManager   NodeManager   NodeManager</span><br><span class="line">  工作节点 1     工作节点 2     工作节点 3</span><br><span class="line">      │            │            │</span><br><span class="line"> Container      Container      Container</span><br><span class="line">（某个任务）     （某个任务）     （某个任务）</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>ResourceManager（RM）</strong>：负责整个集群的资源分配。</li>
+<li><strong>NodeManager（NM）</strong>：通常在每个参与计算的工作节点上运行，报告资源情况，负责启动、监视本机的任务容器。</li>
+<li><strong>ApplicationMaster（AM）</strong>：<strong>每个应用&#x2F;作业的协调者</strong>，负责为该作业申请资源、组织任务，并不是全局唯一常驻的“大老板”。</li>
+<li><strong>Container</strong>：YARN 用于分配和隔离任务执行资源的单位；这里不是说它必须是 Docker 容器。</li>
+</ul>
+<h3 id="5-3-一个作业怎样借用机器？"><a href="#5-3-一个作业怎样借用机器？" class="headerlink" title="5.3 一个作业怎样借用机器？"></a>5.3 一个作业怎样借用机器？</h3><ol>
+<li>客户端把作业交给 ResourceManager。</li>
+<li>YARN 为这个应用启动 ApplicationMaster。</li>
+<li>ApplicationMaster 申请适合的计算资源。</li>
+<li>ResourceManager 分配资源，NodeManager 在对应节点启动任务进程。</li>
+<li>任务运行，ApplicationMaster 收集进度；完成后释放资源。</li>
+</ol>
+<p><strong>YARN 不是计算引擎。</strong> 它决定“把工作安排到哪里运行”，具体数据怎么算，由 MapReduce、Spark 等框架负责。</p>
+<hr>
+<h2 id="6-MapReduce：它既是一套编程模型，也有能运行的框架"><a href="#6-MapReduce：它既是一套编程模型，也有能运行的框架" class="headerlink" title="6. MapReduce：它既是一套编程模型，也有能运行的框架"></a>6. MapReduce：它既是一套编程模型，也有能运行的框架</h2><h3 id="6-1-先纠正一个容易想错的画面"><a href="#6-1-先纠正一个容易想错的画面" class="headerlink" title="6.1 先纠正一个容易想错的画面"></a>6.1 先纠正一个容易想错的画面</h3><p>我们经常说“MapReduce 在每个计算节点运行”，但需要更准确地理解。</p>
+<p><strong>MapReduce 是一种批量并行计算模型，也是一套具体的软件框架。</strong> 经典 Hadoop MapReduce 的实现主要是 Java，开发者可以编写 Map 和 Reduce 的逻辑，提交到集群执行。</p>
+<p>不过，<strong>在现代 Hadoop 的 YARN 模式下，并不是每台机器上长期运行一个叫 MapReduce 的独立守护进程，然后它们自己做所有工作</strong>。典型情况是：NodeManager 常驻，MapReduce 作业提交后再启动对应的 ApplicationMaster 和 Map&#x2F;Reduce 任务进程。</p>
+<p>补充一段历史：在 <strong>Hadoop 1.x</strong> 的旧架构里，曾经使用 <strong>JobTracker &#x2F; TaskTracker</strong> 作为 MapReduce 的主从服务角色；到了 <strong>Hadoop 2.x 及之后的 YARN 架构</strong>，资源调度被拆到 ResourceManager、NodeManager，作业协调改由 ApplicationMaster 负责。</p>
+<p>不能把这两代架构混在一起画成一张“现代部署图”。</p>
+<h3 id="6-2-用“统计单词出现次数”理解-MapReduce"><a href="#6-2-用“统计单词出现次数”理解-MapReduce" class="headerlink" title="6.2 用“统计单词出现次数”理解 MapReduce"></a>6.2 用“统计单词出现次数”理解 MapReduce</h3><p>假设 HDFS 里有 100 个大文件，想统计全部文件中 <code>error</code> 出现了多少次。</p>
+<p><strong>Map：</strong> 每个任务读取自己分到的数据片段，输出类似：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(error, 1)</span><br><span class="line">(error, 1)</span><br><span class="line">(info, 1)</span><br><span class="line">(error, 1)</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>Shuffle：</strong> 框架根据 Key 整理中间结果，将相同单词送到对应的 Reduce 任务。</p>
+<p><strong>Reduce：</strong> 把收到的 <code>error</code> 的次数加起来，写出最终结果。</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HDFS 文件</span><br><span class="line">   │</span><br><span class="line">   ├──▶ Map Task 1 ──┐</span><br><span class="line">   ├──▶ Map Task 2 ──┼──▶ Shuffle / Sort ──▶ Reduce Task ──▶ HDFS 结果</span><br><span class="line">   └──▶ Map Task 3 ──┘</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="6-3-真正运行时发生了什么？"><a href="#6-3-真正运行时发生了什么？" class="headerlink" title="6.3 真正运行时发生了什么？"></a>6.3 真正运行时发生了什么？</h3><ol>
+<li>开发者打包好 MapReduce 作业并提交。</li>
+<li>YARN 启动作业专属的 <strong>MRAppMaster</strong>。</li>
+<li>MRAppMaster 组织输入切分、申请资源并安排 Map&#x2F;Reduce Task。</li>
+<li>工作节点上的任务进程从 HDFS 读取对应的数据；Map 输出通常会落到执行节点的本地磁盘供 Shuffle 使用。</li>
+<li>Reduce 拉取需要的中间数据，完成汇总，把输出写到 HDFS 等目标存储。</li>
+</ol>
+<p>这里还有一个很重要的优化思路：<strong>尽量让计算靠近数据</strong>。如果工作节点 B 本来就存着需要的 HDFS 数据块，调度器会尽量考虑让相关任务在 B 或附近运行，从而减少不必要的跨网络搬运。</p>
+<h3 id="6-4-MapReduce-的局限"><a href="#6-4-MapReduce-的局限" class="headerlink" title="6.4 MapReduce 的局限"></a>6.4 MapReduce 的局限</h3><p>它适合大规模、明确边界的批任务，但传统框架在需要反复计算和多阶段处理中，通常会有较重的任务启动与中间数据 I&#x2F;O 开销。这也是后来 Spark 等引擎受到欢迎的原因之一。</p>
+<hr>
+<h2 id="7-Hive：数据文件在-HDFS，为什么还能写-SQL？"><a href="#7-Hive：数据文件在-HDFS，为什么还能写-SQL？" class="headerlink" title="7. Hive：数据文件在 HDFS，为什么还能写 SQL？"></a>7. Hive：数据文件在 HDFS，为什么还能写 SQL？</h2><h3 id="7-1-Hive-是什么？"><a href="#7-1-Hive-是什么？" class="headerlink" title="7.1 Hive 是什么？"></a>7.1 Hive 是什么？</h3><p>想象你已经把 10 TB CSV 或 Parquet 文件放在 HDFS 里。文件系统知道 <code>/hospital/lab/2025/</code> 下有哪些文件，却不知道里面有 <code>patient_id</code>、<code>item_code</code>、<code>value</code> 这些列。</p>
+<p><strong>Apache Hive 是数据仓库软件</strong>。它提供表结构、SQL 接入与查询管理，让你可以把文件当作“表”来理解和查询。</p>
+<p>Hive 不是一台神奇的数据库服务器，自己把所有 TB 级数据塞进内存。经典架构中，Hive 会与<strong>存储系统、元数据服务、计算引擎</strong>一起工作。</p>
+<h3 id="7-2-Hive-运行时有哪些组件？"><a href="#7-2-Hive-运行时有哪些组件？" class="headerlink" title="7.2 Hive 运行时有哪些组件？"></a>7.2 Hive 运行时有哪些组件？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">         JDBC 客户端 / Beeline</span><br><span class="line">                 │ SQL</span><br><span class="line">                 ▼</span><br><span class="line">          HiveServer2</span><br><span class="line">          （SQL 接入服务）</span><br><span class="line">              │      │</span><br><span class="line"> 查询元数据 ───┘      └── 生成/提交计算任务</span><br><span class="line">       ▼                       ▼</span><br><span class="line">Hive Metastore          Tez / Spark 等引擎</span><br><span class="line">       │                       │</span><br><span class="line">  元数据数据库                  │</span><br><span class="line">（例如 MySQL）                  │</span><br><span class="line">                               ▼</span><br><span class="line">                           HDFS 文件</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>HiveServer2</strong>：接收 SQL 的服务进程，支持 JDBC&#x2F;ODBC 客户端连接。</li>
+<li><strong>Hive Metastore</strong>：管理表名、列名、分区、存储位置等元信息的服务；它可以使用 MySQL 等关系型数据库保存这些元数据。</li>
+<li><strong>执行引擎</strong>：真正执行扫描、过滤、聚合的程序；不同 Hive 版本和部署中，可以使用不同执行引擎。</li>
+<li><strong>HDFS &#x2F; 对象存储</strong>：存放实际数据文件。</li>
+</ul>
+<p><strong>最容易误解的地方：Metastore 里的 MySQL 保存的通常是“表的说明书”，不是几十 TB 的业务数据本体。</strong></p>
+<h3 id="7-3-一条-SQL-是怎么跑起来的？"><a href="#7-3-一条-SQL-是怎么跑起来的？" class="headerlink" title="7.3 一条 SQL 是怎么跑起来的？"></a>7.3 一条 SQL 是怎么跑起来的？</h3><p>例如：</p>
+<div class="code-container" data-rel="Sql"><figure class="iseeu highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> item_code, <span class="built_in">COUNT</span>(<span class="operator">*</span>)</span><br><span class="line"><span class="keyword">FROM</span> lab_result</span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> item_code;</span><br></pre></td></tr></table></figure></div>
+
+<p>大致流程：</p>
+<ol>
+<li>JDBC 客户端把 SQL 交给 HiveServer2。</li>
+<li>查询服务读取 Metastore 中的表结构和文件位置。</li>
+<li>执行引擎将 SQL 转化为并行任务。</li>
+<li>工作节点读取 HDFS 中相关文件，进行分组和计数。</li>
+<li>查询结果返回给客户端。</li>
+</ol>
+<p>因此可以这样记忆：<strong>Hive 负责让人用 SQL 理解和管理大规模数据，底层文件系统负责存储，计算引擎负责干活。</strong></p>
+<hr>
+<h2 id="8-Spark：为什么说它是“计算引擎”？"><a href="#8-Spark：为什么说它是“计算引擎”？" class="headerlink" title="8. Spark：为什么说它是“计算引擎”？"></a>8. Spark：为什么说它是“计算引擎”？</h2><h3 id="8-1-Spark-是什么软件？"><a href="#8-1-Spark-是什么软件？" class="headerlink" title="8.1 Spark 是什么软件？"></a>8.1 Spark 是什么软件？</h3><p><strong>Apache Spark 是一套分布式计算框架</strong>，核心主要由 Scala&#x2F;Java 生态实现，既支持 Scala、Java，也提供 Python、SQL 等使用接口。</p>
+<p>Spark 不负责替你建一个 HDFS，也不是非得依赖 Hadoop 才能运行。它可以运行在 <strong>Standalone、YARN、Kubernetes</strong> 等环境里，从 HDFS、对象存储、数据库等数据源读取数据。</p>
+<h3 id="8-2-Spark-启动后有哪些角色？"><a href="#8-2-Spark-启动后有哪些角色？" class="headerlink" title="8.2 Spark 启动后有哪些角色？"></a>8.2 Spark 启动后有哪些角色？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">            Spark Driver</span><br><span class="line">       （你的作业协调进程）</span><br><span class="line">                 │</span><br><span class="line">        申请执行资源 / 分发任务</span><br><span class="line">                 │</span><br><span class="line">    ┌────────────┼─────────────┐</span><br><span class="line">    ▼            ▼             ▼</span><br><span class="line">Executor 1   Executor 2    Executor 3</span><br><span class="line">（JVM）       （JVM）        （JVM）</span><br><span class="line">   │            │             │</span><br><span class="line"> Task         Task          Task</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Driver</strong>：运行用户程序的协调逻辑，生成执行计划、调度任务、追踪执行结果。</li>
+<li><strong>Cluster Manager</strong>：分配资源，可以是 Spark Standalone 自己的管理器、YARN 或 Kubernetes。</li>
+<li><strong>Executor</strong>：为 Spark 应用启动的工作进程，实际执行 Task，并可缓存数据。</li>
+<li><strong>Task</strong>：被分发到 Executor 执行的最小工作单元之一。</li>
+</ul>
+<h3 id="8-3-走一遍-Spark-SQL-的执行过程"><a href="#8-3-走一遍-Spark-SQL-的执行过程" class="headerlink" title="8.3 走一遍 Spark SQL 的执行过程"></a>8.3 走一遍 Spark SQL 的执行过程</h3><p>假设用 Spark 统计上亿条检验数据的平均值：</p>
+<ol>
+<li>开发者提交一个 Spark 程序或 SQL。</li>
+<li>Driver 构建逻辑与物理执行计划，形成可以并行运行的阶段。</li>
+<li>集群管理器分配 Executor 资源。</li>
+<li>Driver 把 Task 分发给各 Executor。</li>
+<li>Executor 并行扫描数据、执行过滤与部分聚合；必要时通过 Shuffle 交换数据。</li>
+<li>结果返回 Driver 或写入目标存储。</li>
+</ol>
+<p>Spark 的优势之一是能够缓存中间结果，减少某些迭代任务的重复读取。但它并不是“只用内存、不碰磁盘”，Shuffle、缓存溢出等场景照样可能产生磁盘 I&#x2F;O。</p>
+<h3 id="8-4-Spark-与-Hive-到底是什么关系？"><a href="#8-4-Spark-与-Hive-到底是什么关系？" class="headerlink" title="8.4 Spark 与 Hive 到底是什么关系？"></a>8.4 Spark 与 Hive 到底是什么关系？</h3><p>Hive 主要提供数据仓库、元数据和 SQL 语义层能力；Spark 主要负责执行计算。Spark SQL 也可以直接读取 Hive Metastore，查询同一批存储文件。</p>
+<p><strong>两者能协作，不意味着必须捆绑部署。</strong></p>
+<hr>
+<h2 id="9-Flink：一条永远不停止的数据流水线，谁在管理？"><a href="#9-Flink：一条永远不停止的数据流水线，谁在管理？" class="headerlink" title="9. Flink：一条永远不停止的数据流水线，谁在管理？"></a>9. Flink：一条永远不停止的数据流水线，谁在管理？</h2><h3 id="9-1-Flink-是什么？"><a href="#9-1-Flink-是什么？" class="headerlink" title="9.1 Flink 是什么？"></a>9.1 Flink 是什么？</h3><p><strong>Apache Flink 是分布式数据处理引擎</strong>，尤其擅长长时间运行、不断接收新数据、需要维护状态的任务。</p>
+<p>比如：</p>
+<ul>
+<li>订单系统每秒产生新的交易事件；</li>
+<li>数据库不断发生新增和修改；</li>
+<li>平台希望实时计算过去五分钟内的事件统计。</li>
+</ul>
+<p>它并非只能做实时流，Flink 也支持<strong>有界数据的批处理</strong>。</p>
+<h3 id="9-2-Flink-集群有哪些进程？"><a href="#9-2-Flink-集群有哪些进程？" class="headerlink" title="9.2 Flink 集群有哪些进程？"></a>9.2 Flink 集群有哪些进程？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">           Flink Client</span><br><span class="line">          （提交作业）</span><br><span class="line">                │</span><br><span class="line">                ▼</span><br><span class="line">           JobManager</span><br><span class="line">     （调度任务、协调 Checkpoint）</span><br><span class="line">                │</span><br><span class="line">     ┌──────────┼──────────┐</span><br><span class="line">     ▼          ▼          ▼</span><br><span class="line">TaskManager  TaskManager  TaskManager</span><br><span class="line">   JVM          JVM          JVM</span><br><span class="line">    │            │            │</span><br><span class="line"> Slot / Task   Slot / Task   Slot / Task</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Client</strong>：将程序或 SQL 转换成可执行作业并提交。它通常不是长驻在集群里负责执行任务的进程。</li>
+<li><strong>JobManager</strong>：统一协调作业调度、任务失败处理、检查点和恢复。</li>
+<li><strong>TaskManager</strong>：执行实际的 Source、计算算子和 Sink 任务。典型实现是 JVM 进程。</li>
+<li><strong>Task Slot</strong>：TaskManager 用于资源分配和任务调度的槽位概念，不是一台单独的服务器。</li>
+</ul>
+<p>Flink 可以直接在机器上部署，也可以由 Kubernetes、YARN 等环境管理运行。</p>
+<h3 id="9-3-用“持续统计”走一遍-Flink-数据流"><a href="#9-3-用“持续统计”走一遍-Flink-数据流" class="headerlink" title="9.3 用“持续统计”走一遍 Flink 数据流"></a>9.3 用“持续统计”走一遍 Flink 数据流</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Kafka 中的新事件</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line"> Source 任务（读）</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line"> Filter 任务（过滤）</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line"> Window 任务（按时间窗口累计）</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line"> Sink 任务（写 Doris）</span><br></pre></td></tr></table></figure></div>
+
+<p>这些算子可以拆成多个并行子任务，分布在不同的 TaskManager 上。只要作业持续运行，新事件就会不断进入，统计结果随之更新。</p>
+<h3 id="9-4-State-与-Checkpoint-到底保存什么？"><a href="#9-4-State-与-Checkpoint-到底保存什么？" class="headerlink" title="9.4 State 与 Checkpoint 到底保存什么？"></a>9.4 State 与 Checkpoint 到底保存什么？</h3><p>假设一条任务要统计某患者最近一小时的检验事件数量。为了计算下一条记录，程序需要知道过去已经累计了多少，这部分就是<strong>状态（State）</strong>。</p>
+<p>如果 TaskManager 突然宕机，光重新启动 Java 进程是不够的，还需要恢复之前的计算状态。**Checkpoint（检查点）**就是 Flink 定期制作的、一组相互一致的分布式状态快照。故障发生时，任务可以从成功完成的检查点恢复。</p>
+<p>但请记住：<strong>Flink 能恢复自己的计算状态，不等于外部 Oracle、MySQL、Doris 的所有操作天然具备端到端精确一次语义。</strong> 还要看 Source 和 Sink 的具体实现。</p>
+<h3 id="9-5-什么叫“Flink-生态”？"><a href="#9-5-什么叫“Flink-生态”？" class="headerlink" title="9.5 什么叫“Flink 生态”？"></a>9.5 什么叫“Flink 生态”？</h3><p><strong>生态</strong>就是围绕一个核心产品形成的工具和项目集合：</p>
+<ul>
+<li><strong>Flink Runtime</strong>：核心运行引擎；</li>
+<li><strong>Flink SQL &#x2F; Table API</strong>：用 SQL 或表模型描述计算；</li>
+<li><strong>Flink Connector</strong>：从数据库、Kafka 等地方读取数据或写入数据；</li>
+<li><strong>Flink CDC</strong>：基于 Flink 生态实现数据库全量与变更同步；</li>
+<li><strong>Flink Kubernetes Operator</strong>：协助在 Kubernetes 上部署和管理 Flink 作业。</li>
+</ul>
+<p>其中 <strong>Flink CDC 不是 Flink 的另一个名字</strong>，它侧重数据库数据同步；Flink 本身是更通用的计算引擎。</p>
+<h3 id="9-6-Hadoop-周边的管理软件：不是-Hadoop-核心进程"><a href="#9-6-Hadoop-周边的管理软件：不是-Hadoop-核心进程" class="headerlink" title="9.6 Hadoop 周边的管理软件：不是 Hadoop 核心进程"></a>9.6 Hadoop 周边的管理软件：不是 Hadoop 核心进程</h3><p>过去的 Hadoop 生态还经常出现 <strong>Apache Ambari、Apache Bigtop、Cloudera Manager &#x2F; CDH、HDP、Hue</strong> 等名称。它们并非 HDFS 或 MapReduce 的另一种名字。</p>
+<ul>
+<li><strong>Ambari</strong>：一套带 Web 管理界面的集群管理软件，管理端与节点 Agent 配合，协助安装、配置、启停和监控 Hadoop 组件；在新项目中应核对维护与版本适配情况。</li>
+<li><strong>Bigtop</strong>：主要提供 Hadoop 相关项目的打包、测试和集成工具，不是替代 NameNode 的服务。</li>
+<li><strong>Cloudera Manager &#x2F; CDH、HDP</strong>：商业 Hadoop 发行版及运维管理相关产品和历史产品线，用于把大量组件打包、管理起来。</li>
+<li><strong>Hue</strong>：带 Web 界面的交互工具，帮助开发者编写 SQL、浏览文件与数据。它是入口界面，不负责在所有工作节点执行 Map 任务。</li>
+</ul>
+<p>可以简单地记成：<strong>Hadoop 核心负责存储和执行，周边平台帮助我们安装、管理和操作它们。</strong> 构建 SeaTunnel 或 Doris 系统，不需要先拥有整套 Hadoop 生态。</p>
+<hr>
+<h2 id="10-数据采集工具：它们到底是怎么“跑”起来的？"><a href="#10-数据采集工具：它们到底是怎么“跑”起来的？" class="headerlink" title="10. 数据采集工具：它们到底是怎么“跑”起来的？"></a>10. 数据采集工具：它们到底是怎么“跑”起来的？</h2><p>现在再看 SeaTunnel、DataX 等工具，就容易理解了：它们大多是在<strong>执行读取任务 → 处理或传递记录 → 执行写入任务</strong>。</p>
+<p>先认识四个常见词：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Source（数据输入） → Transform（转换） → Sink（数据输出）</span><br><span class="line">     ▲                                      ▲</span><br><span class="line">     └──────── Connector（连接器）───────────┘</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Source</strong>：负责从 Oracle、MySQL、Kafka 等获取记录；</li>
+<li><strong>Transform</strong>：负责过滤字段、修改格式等转换；</li>
+<li><strong>Sink</strong>：把记录写往数据库、文件或消息队列；</li>
+<li><strong>Connector</strong>：实现“如何连接某种数据源”的插件。</li>
+</ul>
+<p>这里的 <strong>Sink</strong> 原意是“水槽”，在数据领域就是<strong>输出端</strong>。它是工作职责，不等同于“必须是一台数据库服务器”。</p>
+<h3 id="10-1-DataX：启动一个离线同步作业"><a href="#10-1-DataX：启动一个离线同步作业" class="headerlink" title="10.1 DataX：启动一个离线同步作业"></a>10.1 DataX：启动一个离线同步作业</h3><p><strong>DataX 是阿里巴巴开源的离线数据同步框架</strong>，核心实现基于 Java，通常通过 Python 启动脚本调用 Java 程序。它的开源版经典形态以<strong>单机进程内多线程并发</strong>完成同步，而不是默认自带一个像 Hadoop 那样的多节点资源管理集群。</p>
+<p>你写一份任务配置，说明：</p>
+<ul>
+<li>从哪张 Oracle 表读取；</li>
+<li>写到哪张 MySQL 表；</li>
+<li>使用什么 Reader、Writer；</li>
+<li>需要多少并发。</li>
+</ul>
+<p>运行过程可以想象成：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">DataX Job（本机 Java 进程）</span><br><span class="line">          │</span><br><span class="line">       拆分 Task</span><br><span class="line">          │</span><br><span class="line">     ┌────┴────┐</span><br><span class="line">     ▼         ▼</span><br><span class="line">   Task 1    Task 2       ……</span><br><span class="line">     │         │</span><br><span class="line">   Reader    Reader</span><br><span class="line">     ▼         ▼</span><br><span class="line">   Channel   Channel     （缓冲、限速、传输）</span><br><span class="line">     ▼         ▼</span><br><span class="line">   Writer    Writer</span><br><span class="line">     │         │</span><br><span class="line">     └────┬────┘</span><br><span class="line">          ▼</span><br><span class="line">        MySQL</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>它最像一个现成的、可配置的批量搬运程序。</strong> 不必先架设 Hadoop 集群。它很适合在实验中作为手写 Python &#x2F; Java 抽取器的对照组。</p>
+<h3 id="10-2-Apache-SeaTunnel：专门执行数据同步任务的引擎"><a href="#10-2-Apache-SeaTunnel：专门执行数据同步任务的引擎" class="headerlink" title="10.2 Apache SeaTunnel：专门执行数据同步任务的引擎"></a>10.2 Apache SeaTunnel：专门执行数据同步任务的引擎</h3><p><strong>Apache SeaTunnel 是一套真正可以部署的数据集成软件</strong>，不是一份 JDBC 工具包。它提供连接器、转换组件和任务执行机制。</p>
+<p>使用自身 <strong>Zeta Engine</strong> 时，可以理解为：有负责协调作业的 Master&#x2F;Coordinator 逻辑，也有实际运行 Source、Transform、Sink 任务的 Worker 逻辑。既可以进行小规模部署，也可以按需求扩展到多节点执行。</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">               SeaTunnel 客户端</span><br><span class="line">              （提交作业配置）</span><br><span class="line">                      │</span><br><span class="line">                      ▼</span><br><span class="line">           Zeta Coordinator / Master</span><br><span class="line">             （计划、调度、恢复）</span><br><span class="line">                      │</span><br><span class="line">             ┌────────┴────────┐</span><br><span class="line">             ▼                 ▼</span><br><span class="line">          Worker 1          Worker 2</span><br><span class="line">          ┌──────┐          ┌──────┐</span><br><span class="line">Oracle ──▶│Source│          │Source│◀── Oracle</span><br><span class="line">          └──┬───┘          └──┬───┘</span><br><span class="line">             ▼                 ▼</span><br><span class="line">          Transform         Transform</span><br><span class="line">             ▼                 ▼</span><br><span class="line">          MySQL Sink        MySQL Sink</span><br></pre></td></tr></table></figure></div>
+
+<p>以上是理解职责的<strong>逻辑图</strong>，不是要求每个 Worker 都必须同时包含一整条 Source→Sink 流水线。实际任务如何切分、部署，要看执行计划和配置。</p>
+<p>SeaTunnel 的 Zeta 引擎可以管理任务切分、资源、状态和检查点；其连接器负责具体数据库的读取和写入。部分场景也可以接入 Flink 或 Spark 执行体系，<strong>所以使用 SeaTunnel 不等于必须另外安装 Flink</strong>。</p>
+<p>对我们最重要的问题是：<strong>它能不能在 Oracle 11g、弱网和缺索引的大表环境里可靠抽取？</strong> 这需要 PoC 验证，而不能从“支持 Oracle JDBC”直接推导出“故障恢复一定没问题”。</p>
+<h3 id="10-3-Apache-NiFi：拖拽数据流，后台运行-Processor"><a href="#10-3-Apache-NiFi：拖拽数据流，后台运行-Processor" class="headerlink" title="10.3 Apache NiFi：拖拽数据流，后台运行 Processor"></a>10.3 Apache NiFi：拖拽数据流，后台运行 Processor</h3><p><strong>Apache NiFi 是可视化的数据流管理软件</strong>，核心运行时基于 JVM。安装后，可以打开 Web 界面，把一系列 Processor 连接起来。</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">数据库 Processor ──▶ 过滤 Processor ──▶ 文件/数据库 Processor</span><br><span class="line">                      │</span><br><span class="line">                 Connection 队列</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Processor</strong>：实际执行读取、转换、路由、写入的组件；</li>
+<li><strong>FlowFile</strong>：在流程里流动的数据对象，包含内容及属性；</li>
+<li><strong>Connection</strong>：连接 Processor 的队列，可设置积压阈值，触发<strong>背压（Backpressure）</strong>；</li>
+<li><strong>Flow Controller</strong>：在 NiFi 进程中安排 Processor 的执行。</li>
+</ul>
+<p>如果下游 MySQL 写得慢，队列会积压，NiFi 可以据此减缓上游处理速度。这比自己在 Java 里到处写线程池和阻塞队列更直观。</p>
+<p>NiFi 适合<strong>医院 A 给数据库、医院 B 给 CSV、医院 C 给 HTTP API</strong> 的复杂接入环境。它的优势是流程编排和可观察性，而不是保证任意复杂 SQL 都能跑得比 SeaTunnel 快。</p>
+<h3 id="10-4-用一张表看清三个工具的运行形态"><a href="#10-4-用一张表看清三个工具的运行形态" class="headerlink" title="10.4 用一张表看清三个工具的运行形态"></a>10.4 用一张表看清三个工具的运行形态</h3><table>
+<thead>
+<tr>
+<th>产品</th>
+<th>你实际要运行什么</th>
+<th>最像什么</th>
+<th>适合先研究的场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>DataX</strong></td>
+<td>主要是每个离线作业对应的 Java 执行进程及线程</td>
+<td>批量数据搬运程序</td>
+<td>Oracle → MySQL 离线抽取</td>
+</tr>
+<tr>
+<td><strong>SeaTunnel</strong></td>
+<td>任务提交入口、连接器、Zeta 执行引擎及 Worker</td>
+<td>可扩展的数据同步执行平台</td>
+<td>大量任务、并行同步、恢复</td>
+</tr>
+<tr>
+<td><strong>NiFi</strong></td>
+<td>一个或多个 JVM 服务、Web UI、Processor 与队列</td>
+<td>可视化数据流编排平台</td>
+<td>数据源协议复杂、流程常变</td>
+</tr>
+</tbody></table>
+<p><strong>它们可以同时涉及采集、传输和转换，不是“采集层每次必须装一个，传输层还要再装一个”。</strong></p>
+<hr>
+<h2 id="11-Kafka：数据为什么要先进一个“中转站”？"><a href="#11-Kafka：数据为什么要先进一个“中转站”？" class="headerlink" title="11. Kafka：数据为什么要先进一个“中转站”？"></a>11. Kafka：数据为什么要先进一个“中转站”？</h2><h3 id="11-1-Kafka-是什么软件？"><a href="#11-1-Kafka-是什么软件？" class="headerlink" title="11.1 Kafka 是什么软件？"></a>11.1 Kafka 是什么软件？</h3><p><strong>Apache Kafka 是分布式事件流平台</strong>，通常表现为一个由多个 <strong>Broker</strong> 服务组成的集群，以及向其中写入、从中读取的客户端。</p>
+<p>它可以当作一种可持久化的“消息中转站”，但与传统只做即时交付的队列不同，Kafka 还会按照保留策略保存事件日志，消费者可以在允许的范围内重新读取历史事件。</p>
+<h3 id="11-2-运行中的-Kafka-长什么样？"><a href="#11-2-运行中的-Kafka-长什么样？" class="headerlink" title="11.2 运行中的 Kafka 长什么样？"></a>11.2 运行中的 Kafka 长什么样？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">生产者 Producer</span><br><span class="line">    │  写入事件</span><br><span class="line">    ▼</span><br><span class="line"> ┌────────────────Kafka 集群────────────────┐</span><br><span class="line"> │ Broker A        Broker B        Broker C │</span><br><span class="line"> │ Topic 分区 0     Topic 分区 1     副本等   │</span><br><span class="line"> └──────────────────┬─────────────────────┘</span><br><span class="line">                    │</span><br><span class="line">             消费者 Consumer</span><br><span class="line">           （读事件并处理）</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Producer</strong>：往 Kafka 发消息的应用；</li>
+<li><strong>Broker</strong>：Kafka 服务端进程；</li>
+<li><strong>Topic</strong>：一类事件的逻辑名称，例如 <code>lab-events</code>；</li>
+<li><strong>Partition</strong>：Topic 的分区，Kafka 用它分散存储和并行处理；</li>
+<li><strong>Consumer Group</strong>：一组协作消费分区的消费者实例；</li>
+<li><strong>Offset</strong>：消费者读取日志时用到的分区内位置。</li>
+</ul>
+<p>Kafka 当前还涉及 <strong>KRaft</strong> 等集群元数据管理机制；对入门者先理解 Broker、Topic、Partition 与消费组就足够了。</p>
+<h3 id="11-3-为什么不让-Source-直接写数据库？"><a href="#11-3-为什么不让-Source-直接写数据库？" class="headerlink" title="11.3 为什么不让 Source 直接写数据库？"></a>11.3 为什么不让 Source 直接写数据库？</h3><p>假设医院系统持续产生大量新记录，而 Doris 在某一时刻正在维护或写入较慢。</p>
+<p>没有中间缓冲时，源端与目标端耦合得很紧；有了 Kafka，可以先将事件持久化，消费者按自己的能力继续处理。这有助于<strong>缓冲、解耦、重放和多消费者订阅</strong>。</p>
+<p>但 Kafka 并不是必须的：<strong>一次性 Oracle 历史快照 → MySQL</strong>，如果 SeaTunnel 已能可靠直连写入，硬塞 Kafka 只会多出 Broker、磁盘、Topic、消费者和运维工作。</p>
+<p><strong>同类技术</strong>：Apache Pulsar 也是消息与流平台，拥有不同的架构和存储组织方式。入门时先掌握 Kafka 的角色模型，再比较差异更容易。</p>
+<hr>
+<h2 id="12-CDC：到底是谁在“盯着数据库”？"><a href="#12-CDC：到底是谁在“盯着数据库”？" class="headerlink" title="12. CDC：到底是谁在“盯着数据库”？"></a>12. CDC：到底是谁在“盯着数据库”？</h2><h3 id="12-1-CDC-是技术方式，不是一个软件名称"><a href="#12-1-CDC-是技术方式，不是一个软件名称" class="headerlink" title="12.1 CDC 是技术方式，不是一个软件名称"></a>12.1 CDC 是技术方式，不是一个软件名称</h3><p>**CDC（Change Data Capture，变更数据捕获）**表示识别并传递数据库发生的增、删、改变化。</p>
+<p>常见方式包括：</p>
+<ol>
+<li><strong>定时 SQL 查询</strong>：例如查 <code>updated_at</code> 晚于上次位置的记录；</li>
+<li><strong>事务日志 CDC</strong>：读取 MySQL Binlog、Oracle Redo Log 等相关变更信息。</li>
+</ol>
+<p>日志 CDC 可以减少反复扫描业务表的需要，但需要权限、日志保留、数据库配置与连接器支持，不等于“绝对零开销”。</p>
+<h3 id="12-2-Debezium-真正部署在哪里？"><a href="#12-2-Debezium-真正部署在哪里？" class="headerlink" title="12.2 Debezium 真正部署在哪里？"></a>12.2 Debezium 真正部署在哪里？</h3><p><strong>Debezium 是专注数据库变更捕获的软件项目，最常见的部署方式是作为 Kafka Connect 的 Source Connector 运行。</strong></p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">MySQL</span><br><span class="line">  │ 写业务数据</span><br><span class="line">  ▼</span><br><span class="line">Binlog（事务日志）</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Kafka Connect Worker 进程</span><br><span class="line">  └── Debezium Connector / Task</span><br><span class="line">              │</span><br><span class="line">              ▼</span><br><span class="line">         Kafka Topic</span><br><span class="line">              │</span><br><span class="line">              ▼</span><br><span class="line">       下游消费者 / Doris</span><br></pre></td></tr></table></figure></div>
+
+<p>这里要特别区分：</p>
+<ul>
+<li><strong>Kafka Broker</strong>：保存消息的服务；</li>
+<li><strong>Kafka Connect Worker</strong>：负责运行 Connector 任务的服务；</li>
+<li><strong>Debezium Connector</strong>：真正懂得怎样读取某种数据库变更的插件。</li>
+</ul>
+<p><strong>三者不是同一个程序。</strong> Debezium 也有不同于 Kafka Connect 的运行方式，因此上图只表示最经典、最容易理解的架构。</p>
+<h3 id="12-3-Flink-CDC、Canal、Maxwell-又是什么？"><a href="#12-3-Flink-CDC、Canal、Maxwell-又是什么？" class="headerlink" title="12.3 Flink CDC、Canal、Maxwell 又是什么？"></a>12.3 Flink CDC、Canal、Maxwell 又是什么？</h3><ul>
+<li><strong>Flink CDC</strong>：围绕 Flink 运行与数据同步能力构建的数据库采集工具，适合需要与流计算衔接的场景。</li>
+<li><strong>Canal</strong>：主要关注 MySQL Binlog 解析，把变更事件交给下游系统。</li>
+<li><strong>Maxwell</strong>：较轻量的 MySQL Binlog 采集工具，通常把变化转为 JSON 等事件输出。</li>
+<li><strong>Kafka Connect</strong>：运行各种 Source&#x2F;Sink Connector 的框架，<strong>本身并不等于 CDC</strong>。</li>
+</ul>
+<h3 id="12-4-为什么当前医疗项目不急着上-CDC？"><a href="#12-4-为什么当前医疗项目不急着上-CDC？" class="headerlink" title="12.4 为什么当前医疗项目不急着上 CDC？"></a>12.4 为什么当前医疗项目不急着上 CDC？</h3><p>我们手里的数据源是一份<strong>截至某个时点的 Oracle 11g 静态镜像</strong>。它不持续产生新的业务记录，就没有持续消费变更日志的必要。</p>
+<p>而且，Oracle 11g 对不少现代 CDC 工具而言涉及版本兼容限制。产品介绍写着“支持 Oracle”，不代表它正式支持所有旧版本数据库。</p>
+<p>因此现在应优先验证<strong>全量快照采集</strong>。如果未来医院提供定期更新的镜像，可以研究两次快照的比对、补采；只有在具备合适的在线数据库、权限和日志条件时，才进一步考虑日志 CDC。</p>
+<h3 id="12-5-如果数据来自日志文件或-HTTP-接口呢？"><a href="#12-5-如果数据来自日志文件或-HTTP-接口呢？" class="headerlink" title="12.5 如果数据来自日志文件或 HTTP 接口呢？"></a>12.5 如果数据来自日志文件或 HTTP 接口呢？</h3><p>除了数据库，还会遇到服务器日志、容器日志、CSV 文件以及第三方 HTTP API。这时负责“读取日志”的软件，和负责“解析数据库事务日志”的 CDC 软件不是一个概念。</p>
+<table>
+<thead>
+<tr>
+<th>产品</th>
+<th>它是什么、跑在哪里</th>
+<th>如何工作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fluent Bit</strong></td>
+<td>通常部署在应用服务器或容器节点上的轻量级代理，核心实现以 C 语言为主</td>
+<td>从日志文件、系统日志等读取记录，解析、过滤，再发送到下游</td>
+</tr>
+<tr>
+<td><strong>Filebeat</strong></td>
+<td>Elastic 生态的轻量级日志采集程序（Go 实现）</td>
+<td>在服务器上跟踪文件的新增内容，把记录发往 Elasticsearch、Logstash 等目标</td>
+</tr>
+<tr>
+<td><strong>Apache Flume</strong></td>
+<td>传统 Hadoop 生态的日志采集系统，核心基于 Java</td>
+<td>运行 Flume Agent，用 Source 接收、Channel 缓冲、Sink 发送</td>
+</tr>
+<tr>
+<td><strong>Apache NiFi</strong></td>
+<td>前面介绍过的 JVM 数据流平台</td>
+<td>用 Processor 组合 HTTP、SFTP、数据库、文件等接入方式</td>
+</tr>
+</tbody></table>
+<p>Flume 的典型模型可以画成：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">日志来源 → Flume Agent</span><br><span class="line">               │</span><br><span class="line">             Source</span><br><span class="line">               │</span><br><span class="line">             Channel（缓冲）</span><br><span class="line">               │</span><br><span class="line">              Sink → HDFS 等目标</span><br></pre></td></tr></table></figure></div>
+
+<p>请注意：<strong>Flume Agent 里的 Sink 是它这个采集程序的输出端，和 SeaTunnel Sink 是同一类抽象概念，不代表二者是同一个插件。</strong></p>
+<p>这类工具主要解决日志、事件和多协议数据的接入；对 Oracle 大表按业务键读取，应优先研究 JDBC 类采集工具。</p>
+<hr>
+<h2 id="13-数据如何保存：MySQL、HDFS、对象存储与数据湖"><a href="#13-数据如何保存：MySQL、HDFS、对象存储与数据湖" class="headerlink" title="13. 数据如何保存：MySQL、HDFS、对象存储与数据湖"></a>13. 数据如何保存：MySQL、HDFS、对象存储与数据湖</h2><h3 id="13-1-MySQL-和-HDFS-不是竞争关系"><a href="#13-1-MySQL-和-HDFS-不是竞争关系" class="headerlink" title="13.1 MySQL 和 HDFS 不是竞争关系"></a>13.1 MySQL 和 HDFS 不是竞争关系</h3><ul>
+<li><strong>MySQL</strong>：数据库服务，管理表、索引和事务，适合业务读写。</li>
+<li><strong>HDFS</strong>：分布式文件系统，主要管理文件和块，适合大规模文件存储。</li>
+</ul>
+<p>HDFS 里面可以保存 CSV、Parquet、ORC 等数据文件，但<strong>HDFS 自己并不负责解析 SQL 并返回 <code>SELECT</code> 结果</strong>。</p>
+<h3 id="13-2-对象存储是什么？"><a href="#13-2-对象存储是什么？" class="headerlink" title="13.2 对象存储是什么？"></a>13.2 对象存储是什么？</h3><p>对象存储可以把数据作为对象保存，通过 S3 等 API 访问。例如 MinIO 或云厂商的对象存储服务。</p>
+<p>从使用方式看，它与本地目录和 HDFS 的文件系统接口不同。典型对象存储更强调<strong>对象、Bucket、Key</strong>。在数据湖架构中，很多计算引擎都可以读取对象存储上的 Parquet 等文件。</p>
+<p>不要把“对象存储”误解成“一定比 HDFS 快”或“只有云上才能用”；它们取舍依赖数据量、运维方式、成本以及读写工作负载。</p>
+<h3 id="13-3-Parquet-ORC-是什么？数据湖表格式又是什么？"><a href="#13-3-Parquet-ORC-是什么？数据湖表格式又是什么？" class="headerlink" title="13.3 Parquet &#x2F; ORC 是什么？数据湖表格式又是什么？"></a>13.3 Parquet &#x2F; ORC 是什么？数据湖表格式又是什么？</h3><p>这是新手非常容易混淆的一组概念：</p>
+<ul>
+<li><strong>Parquet、ORC</strong>：主要是<strong>文件格式</strong>，规定数据在文件里怎样按列编码、压缩和组织。</li>
+<li><strong>Iceberg、Hudi、Paimon</strong>：主要是<strong>数据湖表格式或表管理技术</strong>，帮助管理一组数据文件及其元数据、快照、变更和表级操作。</li>
+<li><strong>HDFS、S3 兼容对象存储</strong>：负责实际存放文件。</li>
+<li><strong>Spark、Flink、Trino 等</strong>：可以作为读取或处理这些数据的计算&#x2F;查询引擎。</li>
+</ul>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Spark / Flink / Trino（读取和计算）</span><br><span class="line">                │</span><br><span class="line">   Iceberg 等表格式（管理表）</span><br><span class="line">                │</span><br><span class="line">   Parquet 等文件格式（保存内容）</span><br><span class="line">                │</span><br><span class="line"> HDFS / 对象存储（放置文件）</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>不要把 Iceberg 当成另一台必须启动的数据库服务器</strong>。它主要定义表如何通过元数据和数据文件组织起来；不同部署还会有 Catalog 等配套服务。</p>
+<hr>
+<h2 id="14-OLAP-数据库：Doris-和-ClickHouse-究竟运行了哪些东西？"><a href="#14-OLAP-数据库：Doris-和-ClickHouse-究竟运行了哪些东西？" class="headerlink" title="14. OLAP 数据库：Doris 和 ClickHouse 究竟运行了哪些东西？"></a>14. OLAP 数据库：Doris 和 ClickHouse 究竟运行了哪些东西？</h2><h3 id="14-1-先理解-OLTP-与-OLAP-的区别"><a href="#14-1-先理解-OLTP-与-OLAP-的区别" class="headerlink" title="14.1 先理解 OLTP 与 OLAP 的区别"></a>14.1 先理解 OLTP 与 OLAP 的区别</h3><p>**OLTP（联机事务处理）**更擅长记录和维护日常业务：新增订单、修改账户、按主键读取少量数据。</p>
+<p>**OLAP（联机分析处理）**更关心大范围的统计与检索：某五年时间段内，各年龄组有哪些诊断及异常指标？</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>OLTP</th>
+<th>OLAP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主要任务</td>
+<td>日常业务事务</td>
+<td>聚合、过滤、多维分析</td>
+</tr>
+<tr>
+<td>典型查询</td>
+<td>按主键查一行或少量记录</td>
+<td>扫描大量记录、计算统计值</td>
+</tr>
+<tr>
+<td>常见存储组织</td>
+<td>行存</td>
+<td>列存，但不绝对</td>
+</tr>
+<tr>
+<td>常见产品</td>
+<td>MySQL、PostgreSQL、Oracle</td>
+<td>Doris、ClickHouse、StarRocks</td>
+</tr>
+</tbody></table>
+<p><strong>区别是设计目标，不是 SQL 语法。</strong> MySQL 完全可以 <code>GROUP BY</code>，而且索引恰当时也很快。是否需要 OLAP 引擎，要看实际工作负载。</p>
+<h3 id="14-2-为什么列式数据库经常很快？"><a href="#14-2-为什么列式数据库经常很快？" class="headerlink" title="14.2 为什么列式数据库经常很快？"></a>14.2 为什么列式数据库经常很快？</h3><p>想象一张有 100 列的表，你只需要 <code>age</code> 和 <code>gender</code> 两列来统计。</p>
+<p>行存倾向于把一行的各个列放在一起，适合一次拿到整条业务记录；列存倾向于把同一列的数据组织在一起，因此可以减少读取无关字段的开销。</p>
+<p>配合下面几种机制，能进一步加速：</p>
+<ol>
+<li><strong>列裁剪和压缩</strong>：只读需要的列，同列相似值便于压缩；</li>
+<li><strong>Min-Max &#x2F; Zonemap</strong>：先看数据块的范围，跳过不可能命中的块；</li>
+<li><strong>字典、Bitmap、倒排索引</strong>：减少字符串比较或快速找到符合条件的记录集合；</li>
+<li><strong>向量化执行</strong>：一次处理一批数值，减少逐行调度开销；</li>
+<li><strong>排序键、分区与数据跳过</strong>：尽量把相关数据放得更近，缩小扫描范围。</li>
+</ol>
+<p>这些优化并非所有引擎、所有表都会自动同时使用。尤其“向量化”和 SIMD 不是同一回事：前者是<strong>批量执行方式</strong>，后者是<strong>CPU 指令级并行能力</strong>。</p>
+<h3 id="14-3-Doris-是什么？启动之后有哪些进程？"><a href="#14-3-Doris-是什么？启动之后有哪些进程？" class="headerlink" title="14.3 Doris 是什么？启动之后有哪些进程？"></a>14.3 Doris 是什么？启动之后有哪些进程？</h3><p><strong>Apache Doris 是一套可以直接接收 SQL、保存分析数据并执行分布式查询的 OLAP 数据库软件。</strong> 它不是简单的 MySQL 插件。</p>
+<p>经典的<strong>存算一体部署</strong>主要分为两类进程：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"> MySQL 客户端 / BI / Java JDBC</span><br><span class="line">             │ SQL</span><br><span class="line">             ▼</span><br><span class="line">       Doris FE</span><br><span class="line">  （FrontEnd 前端）</span><br><span class="line">解析 SQL、管理元数据</span><br><span class="line">生成和协调查询计划</span><br><span class="line">             │</span><br><span class="line">   ┌─────────┼─────────┐</span><br><span class="line">   ▼         ▼         ▼</span><br><span class="line">Doris BE  Doris BE   Doris BE</span><br><span class="line">保存数据   保存数据    保存数据</span><br><span class="line">执行计算   执行计算    执行计算</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>FE（Frontend）</strong>：负责 SQL 接入、解析和规划，管理库表等元数据，并协调分布式查询；FE 主要由 Java 实现。</li>
+<li><strong>BE（Backend）</strong>：负责存储数据分片和执行查询计算；经典 BE 核心主要由 C++ 实现。</li>
+</ul>
+<p>一次查询流程：客户端向 FE 提交 SQL → FE 生成执行计划 → 多个 BE 并行扫描、过滤、聚合和交换部分结果 → 返回最终结果。</p>
+<p>Doris 支持不同数据模型，例如 <strong>Unique Key</strong> 可以满足某些按键更新的需求。它也有<strong>存算分离架构</strong>，因此 FE&#x2F;BE 本地多副本存储图是便于理解的经典形态，不代表所有部署方式。</p>
+<h3 id="14-4-ClickHouse-又是什么形态？"><a href="#14-4-ClickHouse-又是什么形态？" class="headerlink" title="14.4 ClickHouse 又是什么形态？"></a>14.4 ClickHouse 又是什么形态？</h3><p><strong>ClickHouse 也是分析型数据库软件</strong>，其服务端核心主要由 C++ 实现。安装后可以启动 <code>clickhouse-server</code>，它能处理 SQL 并保存 MergeTree 等表引擎的数据。</p>
+<p>最容易理解的是单节点模式：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SQL 客户端 ──▶ ClickHouse Server</span><br><span class="line">                   │</span><br><span class="line">              MergeTree 表</span><br><span class="line">            （列式数据文件）</span><br></pre></td></tr></table></figure></div>
+
+<p>多节点场景下，可以通过**分片（Shard）<strong>和</strong>副本（Replica）**组织数据，还可能使用 ClickHouse Keeper 等组件协调复制元数据：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">      查询入口</span><br><span class="line">         │</span><br><span class="line">ClickHouse 节点</span><br><span class="line">         │</span><br><span class="line"> 分布到多个 Shard</span><br><span class="line">    │       │</span><br><span class="line"> Shard A  Shard B</span><br><span class="line"> 多副本    多副本</span><br></pre></td></tr></table></figure></div>
+
+<p>它与 Doris 的 FE&#x2F;BE 两类角色划分不完全相同。初学者不必强行把 ClickHouse 某个节点叫作 FE 或 BE。</p>
+<h3 id="14-5-Doris-与-ClickHouse-怎么选？"><a href="#14-5-Doris-与-ClickHouse-怎么选？" class="headerlink" title="14.5 Doris 与 ClickHouse 怎么选？"></a>14.5 Doris 与 ClickHouse 怎么选？</h3><table>
+<thead>
+<tr>
+<th>角度</th>
+<th>Doris</th>
+<th>ClickHouse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>初学者先认识的部署角色</td>
+<td>FE 协调 + BE 存储&#x2F;计算（经典模式）</td>
+<td>ClickHouse Server；按需组成分片与副本</td>
+</tr>
+<tr>
+<td>常见优势场景</td>
+<td>交互式多维查询、实时分析、复杂 SQL</td>
+<td>日志、事件、时序、大规模聚合与分析</td>
+</tr>
+<tr>
+<td>数据更新</td>
+<td>可按表模型设计 Upsert</td>
+<td>依表引擎与更新策略设计</td>
+</tr>
+<tr>
+<td>学习重点</td>
+<td>FE&#x2F;BE、数据模型、分桶、索引</td>
+<td>MergeTree、排序键、分片、副本</td>
+</tr>
+</tbody></table>
+<p>不能只凭“某系统支持 JOIN”或“不支持 JOIN”选型。二者都能做不少复杂查询，真正差别需要通过数据模型、SQL 和压测来判断。</p>
+<h3 id="14-6-Trino-和-Hive-为什么也出现在分析清单里？"><a href="#14-6-Trino-和-Hive-为什么也出现在分析清单里？" class="headerlink" title="14.6 Trino 和 Hive 为什么也出现在分析清单里？"></a>14.6 Trino 和 Hive 为什么也出现在分析清单里？</h3><p><strong>Trino 是分布式 SQL 查询引擎</strong>，典型集群有 <strong>Coordinator</strong> 和多个 <strong>Worker</strong>，通过 Connector 访问外部数据源。它自己不是以本地管理一套业务数据为核心定位的 Doris 式存储型数据库。</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SQL 客户端 → Trino Coordinator → Trino Workers → 各类数据源</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>Hive</strong> 更多承担数据仓库 SQL 和表管理角色，通常与底层文件存储、执行引擎配合。它们都是分析链路里的工具，但“分析工具”并不意味着底层架构必须相同。</p>
+<hr>
+<h2 id="15-批量数据抽取：真正难的不是写-SELECT"><a href="#15-批量数据抽取：真正难的不是写-SELECT" class="headerlink" title="15. 批量数据抽取：真正难的不是写 SELECT"></a>15. 批量数据抽取：真正难的不是写 SELECT</h2><p>前面认识了软件进程，现在回到最初的 Oracle 抽取问题。</p>
+<h3 id="15-1-ResultSet-next-不一定是一条一次网络请求"><a href="#15-1-ResultSet-next-不一定是一条一次网络请求" class="headerlink" title="15.1 ResultSet.next() 不一定是一条一次网络请求"></a>15.1 <code>ResultSet.next()</code> 不一定是一条一次网络请求</h3><p>Java 用 JDBC 逐行遍历 <code>ResultSet</code>，不意味着驱动必然每调用一次 <code>next()</code> 就走一次网络。实际可能由数据库驱动根据 <code>fetchSize</code> 等机制分批取回记录。</p>
+<p>性能需要同时看 SQL 执行计划、索引、数据库 I&#x2F;O、网络、批大小和写入端吞吐。</p>
+<h3 id="15-2-Offset-分页和-Keyset-分页"><a href="#15-2-Offset-分页和-Keyset-分页" class="headerlink" title="15.2 Offset 分页和 Keyset 分页"></a>15.2 Offset 分页和 Keyset 分页</h3><p>深度偏移分页可能需要反复跳过大量记录。如果有稳定唯一、适合索引访问的排序键，Keyset 往往更合适：</p>
+<div class="code-container" data-rel="Sql"><figure class="iseeu highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span></span><br><span class="line"><span class="keyword">FROM</span> lab_result</span><br><span class="line"><span class="keyword">WHERE</span> id <span class="operator">&gt;</span> :last_committed_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> id;</span><br></pre></td></tr></table></figure></div>
+
+<p>这是展示核心思想的 SQL。实际每批还需要限制记录数；在 Oracle 11g 中可使用有序内层查询与外层 <code>ROWNUM</code> 等写法，而不是直接套用新版本的 <code>OFFSET ... FETCH</code> 语法。</p>
+<p><strong>没有适合的索引时，Keyset 可以降低逻辑断点复杂度，却不保证数据库能低成本定位下一页。</strong></p>
+<h3 id="15-3-为什么-Checkpoint-和“写入成功”不是一回事？"><a href="#15-3-为什么-Checkpoint-和“写入成功”不是一回事？" class="headerlink" title="15.3 为什么 Checkpoint 和“写入成功”不是一回事？"></a>15.3 为什么 Checkpoint 和“写入成功”不是一回事？</h3><p>假设原计划读取 1000 行：</p>
+<ol>
+<li>Oracle 已经返回 800 行；</li>
+<li>MySQL 只成功提交了 600 行；</li>
+<li>网络突然断开。</li>
+</ol>
+<p>如果系统把断点记为 800，下次从第 801 行继续，就漏掉了 200 条数据。</p>
+<p>一种稳妥的思想是：<strong>先让目标端确认提交，再推进已完成进度；遇到不确定的提交结果，先查询回执，再决定是否重试。</strong></p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">读取一个确定范围</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line">写入目标端 / 提交事务</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line">确认提交回执</span><br><span class="line">       │</span><br><span class="line">       ▼</span><br><span class="line">推进完成进度</span><br></pre></td></tr></table></figure></div>
+
+<p>这就是为什么还需要学习<strong>幂等、At-Least-Once、Checkpoint、Exactly-Once</strong>。</p>
+<ul>
+<li><strong>At-Least-Once（至少一次）</strong>：失败后可以重试，某些记录可能被再次处理；</li>
+<li><strong>幂等</strong>：同一份记录重复处理，不造成重复业务结果；</li>
+<li><strong>Checkpoint</strong>：系统可恢复的内部进度或状态；</li>
+<li><strong>Exactly-Once</strong>：在严格约定的系统边界内，最终效果相当于只处理一次。</li>
+</ul>
+<p>不要因为工具介绍中写着“支持 Exactly-Once”，就以为它已经替医疗业务完成了患者归并、临床事实事务、血缘保存和 Doris 投影更新。</p>
+<h3 id="15-4-无索引大表，成熟工具也不能凭空修好"><a href="#15-4-无索引大表，成熟工具也不能凭空修好" class="headerlink" title="15.4 无索引大表，成熟工具也不能凭空修好"></a>15.4 无索引大表，成熟工具也不能凭空修好</h3><p>无论使用 Java、Python、DataX 还是 SeaTunnel，<strong>最终都需要 Oracle 执行查询</strong>。如果一张表没有合适索引，执行计划需要反复扫描大表，再优秀的传输引擎也无法凭空改变这一点。</p>
+<p>因此应该先研究：</p>
+<ul>
+<li>能否让筛选在 Oracle 源端完成；</li>
+<li>能否避免针对每个患者重复扫描同一张大表；</li>
+<li>是否有稳定分片键或合理的范围扫描策略；</li>
+<li>是否有源表版本&#x2F;快照的一致性保证；</li>
+<li>是否会因为并发太高影响源库；</li>
+<li>数据库和磁盘条件是否允许建设额外索引。</li>
+</ul>
+<p>工具解决的是通用执行问题，<strong>源数据库的物理访问路径仍决定性能下限</strong>。</p>
+<hr>
+<h2 id="16-医疗数据为什么还需要自己的-Java-业务处理层？"><a href="#16-医疗数据为什么还需要自己的-Java-业务处理层？" class="headerlink" title="16. 医疗数据为什么还需要自己的 Java 业务处理层？"></a>16. 医疗数据为什么还需要自己的 Java 业务处理层？</h2><p>假设 SeaTunnel 已经把 Oracle 检验记录准确写入 MySQL 暂存表，我们能直接宣布“研究数据已经准备好”吗？未必。</p>
+<p>因为医疗数据还有专门的业务语义：</p>
+<ul>
+<li>两个系统里的患者标识是否指向同一个人？</li>
+<li>这条检验结果属于哪次就诊、哪份报告？</li>
+<li>数值和单位是否统一？</li>
+<li>某个疾病诊断与某个检验指标是否必须发生在同一次就诊？</li>
+<li>这条研究事实来自哪张源表、哪个源记录、哪轮处理规则？</li>
+</ul>
+<h3 id="16-1-患者级与就诊级是两个不同问题"><a href="#16-1-患者级与就诊级是两个不同问题" class="headerlink" title="16.1 患者级与就诊级是两个不同问题"></a>16.1 患者级与就诊级是两个不同问题</h3><p>例如患者 2023 年诊断糖尿病，2025 年另一次就诊发生血糖升高。</p>
+<p>检索“糖尿病 AND 血糖升高”：</p>
+<ul>
+<li><strong>患者级 AND</strong>：两项条件在患者历史上分别出现即可；</li>
+<li><strong>就诊级 AND</strong>：必须同一次就诊满足才算命中。</li>
+</ul>
+<p>到底哪一个正确？取决于产品定义。通用数据同步框架不知道医生究竟想表达哪种含义。</p>
+<h3 id="16-2-一个更合理的职责拆分"><a href="#16-2-一个更合理的职责拆分" class="headerlink" title="16.2 一个更合理的职责拆分"></a>16.2 一个更合理的职责拆分</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">医院 Oracle 11g 历史镜像</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">  SeaTunnel / DataX</span><br><span class="line"> （通用数据采集和搬运）</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">   受控暂存区 / 来源证据</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line"> Java 医疗领域处理服务</span><br><span class="line"> （身份、事实、标准化、血缘、幂等）</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">  MySQL 业务数据 / Outbox</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">     Doris / 查询投影</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">    智能检索 / 研究分析</span><br></pre></td></tr></table></figure></div>
+
+<p>这个图表达的是<strong>一种可验证的候选架构，不是已经选定的最终实施方案</strong>。暂存区会增加存储、隐私和生命周期管理成本，也必须避免它与已有的证据存储重复。</p>
+<p><strong>通用框架负责把数据尽量可靠地搬过来；业务系统负责让数据具有正确的临床含义。</strong> 这就是复用成熟软件与保留自研价值之间的边界。</p>
+<h3 id="16-3-数据批次版本，也不能代替就诊关系"><a href="#16-3-数据批次版本，也不能代替就诊关系" class="headerlink" title="16.3 数据批次版本，也不能代替就诊关系"></a>16.3 数据批次版本，也不能代替就诊关系</h3><p>再补一个工程里很容易混淆的概念：<strong>抽取版本号</strong>可以表示“哪次导入的数据”“用了哪套标准化规则”，有助于重放与排查；但它不能表示患者的一次就诊或一份检验报告。</p>
+<p>同一抽取批次里可能包含该患者几十次就诊、上百份报告。若要表达“同一次就诊的诊断与检验”，仍然需要可靠的<strong>就诊 ID、报告 ID、来源业务键及其关联关系</strong>。</p>
+<p>因此，“数据来源和处理版本”与“临床事件之间的关联”，是两条不同维度的线索。</p>
+<hr>
+<h2 id="17-一次完整的实战推演：从-Oracle-到智能检索"><a href="#17-一次完整的实战推演：从-Oracle-到智能检索" class="headerlink" title="17. 一次完整的实战推演：从 Oracle 到智能检索"></a>17. 一次完整的实战推演：从 Oracle 到智能检索</h2><p>为了把前面的名词连起来，我们假设建设一个仅处理<strong>离线历史快照</strong>的专病数据平台。</p>
+<h3 id="第一步：选择采集方式"><a href="#第一步：选择采集方式" class="headerlink" title="第一步：选择采集方式"></a>第一步：选择采集方式</h3><p>因为 Oracle 数据已经冻结，优先选择 <strong>JDBC 全量&#x2F;范围抽取</strong>，而不是直接部署 CDC。</p>
+<h3 id="第二步：执行抽取任务"><a href="#第二步：执行抽取任务" class="headerlink" title="第二步：执行抽取任务"></a>第二步：执行抽取任务</h3><p>SeaTunnel 从配置中读取 Oracle 连接信息和查询条件；Zeta 引擎安排 Source 任务；Source 读取记录并交给目标端 Sink。</p>
+<p>这一阶段关注 SQL 执行计划、分片、网络超时、失败恢复与目标端幂等。</p>
+<h3 id="第三步：写入受控存储"><a href="#第三步：写入受控存储" class="headerlink" title="第三步：写入受控存储"></a>第三步：写入受控存储</h3><p>可以先写入 MySQL 暂存区，保留必要的来源键、抽取批次和追溯信息；根据合规要求进行访问控制、加密、脱敏、保留与清理。</p>
+<h3 id="第四步：Java-领域服务加工"><a href="#第四步：Java-领域服务加工" class="headerlink" title="第四步：Java 领域服务加工"></a>第四步：Java 领域服务加工</h3><p>医疗领域服务把来源患者、就诊、报告、检验项目整理成可用事实，并以业务事务保障身份映射、标准值、血缘和回执的一致性。</p>
+<h3 id="第五步：建立分析层"><a href="#第五步：建立分析层" class="headerlink" title="第五步：建立分析层"></a>第五步：建立分析层</h3><p>根据实际 SQL 和性能测试，决定继续优化 MySQL，还是将分析投影写入 Doris 等 OLAP 数据库。</p>
+<h3 id="第六步：向医生提供检索"><a href="#第六步：向医生提供检索" class="headerlink" title="第六步：向医生提供检索"></a>第六步：向医生提供检索</h3><p>医生选择患者年龄、诊断和检验条件，应用生成具有明确患者级&#x2F;就诊级语义的查询，并返回可追溯的结果。</p>
+<p><strong>请注意：在这条离线链路里，完全可能不需要 Kafka、Flink、HDFS。</strong> 当你真的出现持续变更、大规模流处理或数据湖存储需求时，再按问题引入对应软件。少装几个组件，不代表技术落后。</p>
+<hr>
+<h2 id="18-PoC：如何验证一个产品是否真的适合？"><a href="#18-PoC：如何验证一个产品是否真的适合？" class="headerlink" title="18. PoC：如何验证一个产品是否真的适合？"></a>18. PoC：如何验证一个产品是否真的适合？</h2><p><strong>PoC（Proof of Concept，概念验证）</strong> 是正式重构或引入技术前，先进行的小范围可行性实验。</p>
+<p>它与 <strong>Demo（展示效果）</strong>、<strong>MVP（最小可行产品）<strong>不一样：PoC 主要回答</strong>“技术在我们的条件下能不能成立”</strong>。</p>
+<p>针对 SeaTunnel，可以设计这样一个小实验：</p>
+<ol>
+<li>选择一张脱敏的 Oracle 检验表，固定患者范围和抽取量；</li>
+<li>用 SeaTunnel 抽取到隔离的 MySQL 测试表；</li>
+<li>记录抽取耗时、源库负载、网络流量和目标端吞吐；</li>
+<li>主动断网、重启进程，检查恢复位置；</li>
+<li>按来源业务键核对漏数、重复与内容一致性；</li>
+<li>与现有 Python&#x2F;Java 脚本比较性能及部署维护成本。</li>
+</ol>
+<p><strong>Benchmark（基准测试）</strong> 则更侧重吞吐、延迟和资源消耗。PoC 可以包含 Benchmark，但还需要验证正确性与恢复能力。</p>
+<hr>
+<h2 id="19-一张“软件运行形态”速查表"><a href="#19-一张“软件运行形态”速查表" class="headerlink" title="19. 一张“软件运行形态”速查表"></a>19. 一张“软件运行形态”速查表</h2><table>
+<thead>
+<tr>
+<th>产品 &#x2F; 技术</th>
+<th>它到底是什么</th>
+<th>通常如何运行或协作</th>
+<th>最主要用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Hadoop</strong></td>
+<td>包含多模块的软件项目与生态</td>
+<td>HDFS、YARN、MapReduce 等配合</td>
+<td>分布式存储与计算基础</td>
+</tr>
+<tr>
+<td><strong>HDFS</strong></td>
+<td>分布式文件系统</td>
+<td>NameNode 管元数据；DataNode 保存文件块</td>
+<td>保存大规模文件</td>
+</tr>
+<tr>
+<td><strong>YARN</strong></td>
+<td>集群资源管理系统</td>
+<td>ResourceManager、NodeManager、ApplicationMaster</td>
+<td>安排计算资源</td>
+</tr>
+<tr>
+<td><strong>MapReduce</strong></td>
+<td>编程模型及执行框架</td>
+<td>作业协调者分派 Map&#x2F;Reduce 任务</td>
+<td>离线批量计算</td>
+</tr>
+<tr>
+<td><strong>Hive</strong></td>
+<td>数据仓库 SQL 与元数据软件</td>
+<td>HiveServer2 + Metastore + 执行引擎 + 存储</td>
+<td>管理、查询海量表数据</td>
+</tr>
+<tr>
+<td><strong>Spark</strong></td>
+<td>分布式计算引擎</td>
+<td>Driver 向 Executor 分发 Task</td>
+<td>批量、SQL、迭代等计算</td>
+</tr>
+<tr>
+<td><strong>Flink</strong></td>
+<td>分布式批流计算引擎</td>
+<td>JobManager 调度 TaskManager</td>
+<td>有状态实时处理、批处理</td>
+</tr>
+<tr>
+<td><strong>DataX</strong></td>
+<td>离线数据同步框架</td>
+<td>单机作业进程及并发 Reader&#x2F;Writer 线程</td>
+<td>批量数据库同步</td>
+</tr>
+<tr>
+<td><strong>SeaTunnel</strong></td>
+<td>数据集成软件平台</td>
+<td>Source&#x2F;Transform&#x2F;Sink + Zeta 执行引擎等</td>
+<td>批流数据集成</td>
+</tr>
+<tr>
+<td><strong>NiFi</strong></td>
+<td>可视化数据流系统</td>
+<td>JVM + Web UI + Processor + 队列</td>
+<td>多协议流程编排</td>
+</tr>
+<tr>
+<td><strong>Kafka</strong></td>
+<td>分布式事件流平台</td>
+<td>Broker 保存 Topic 分区；生产者写、消费者读</td>
+<td>缓冲、解耦、事件传输</td>
+</tr>
+<tr>
+<td><strong>Debezium</strong></td>
+<td>CDC 连接器与平台</td>
+<td>常作为 Kafka Connect Task 运行</td>
+<td>捕获数据库变更</td>
+</tr>
+<tr>
+<td><strong>Flink CDC</strong></td>
+<td>数据库同步工具</td>
+<td>在 Flink 体系中执行相关采集同步</td>
+<td>全量与增量同步</td>
+</tr>
+<tr>
+<td><strong>Doris</strong></td>
+<td>分析型数据库</td>
+<td>经典 FE&#x2F;BE 进程分工</td>
+<td>交互式 OLAP 查询</td>
+</tr>
+<tr>
+<td><strong>ClickHouse</strong></td>
+<td>分析型数据库</td>
+<td>ClickHouse Server；按需配置分片副本</td>
+<td>大规模分析、聚合</td>
+</tr>
+<tr>
+<td><strong>Trino</strong></td>
+<td>分布式 SQL 查询引擎</td>
+<td>Coordinator + Workers + Connectors</td>
+<td>跨数据源查询</td>
+</tr>
+<tr>
+<td><strong>Iceberg</strong></td>
+<td>数据湖表格式</td>
+<td>元数据、快照与文件配合计算引擎</td>
+<td>以表方式管理湖中数据</td>
+</tr>
+</tbody></table>
+<p>表格是帮助建立第一印象的<strong>简化模型</strong>。同一产品在不同版本、单机&#x2F;集群、容器&#x2F;物理机和不同配置下，部署进程会有所差异。</p>
+<hr>
+<h2 id="20-结语：看到新名词，先问它“住在哪里、干什么”"><a href="#20-结语：看到新名词，先问它“住在哪里、干什么”" class="headerlink" title="20. 结语：看到新名词，先问它“住在哪里、干什么”"></a>20. 结语：看到新名词，先问它“住在哪里、干什么”</h2><p>回头看，所谓大数据平台，其实就是许多软件合作完成一条数据链路：</p>
+<ul>
+<li>HDFS 告诉我们，<strong>文件可以分散在多台机器上保存</strong>；</li>
+<li>YARN 告诉我们，<strong>资源可以由统一的调度系统分配</strong>；</li>
+<li>MapReduce、Spark、Flink 告诉我们，<strong>计算可以拆成很多任务并行执行</strong>；</li>
+<li>DataX、SeaTunnel、NiFi、Debezium 告诉我们，<strong>数据可以由现成的采集与集成工具搬运</strong>；</li>
+<li>Kafka 告诉我们，<strong>事件可以在生产者与消费者之间持久化、缓冲和重放</strong>；</li>
+<li>Hive、Trino、Doris、ClickHouse 告诉我们，<strong>查询海量数据可以有不同的存储和计算组织方式</strong>。</li>
+</ul>
+<p>以后再遇到一个新产品，不妨先问五个问题：</p>
+<ol>
+<li><strong>它是什么？</strong> 是一个概念、库、独立程序，还是一整套软件？</li>
+<li><strong>它在哪里运行？</strong> 单机、集群、容器，还是作为别人的插件？</li>
+<li><strong>谁和谁协作？</strong> 有哪些管理进程、工作进程和存储组件？</li>
+<li><strong>数据怎么走？</strong> 从哪里进入、在什么地方处理、最后写到哪里？</li>
+<li><strong>解决了什么实际问题？</strong> 如果不引入它，需要付出什么代价？</li>
+</ol>
+<p>当这些问题能回答清楚，产品名称就不再是需要死记硬背的术语，而是一组可以在脑海里运行起来的软件。</p>
+<p><strong>学习大数据，不是收集更多技术名词，而是逐渐看清它们怎样工作、怎样协作，以及什么时候根本不需要它们。</strong></p>
+<h3 id="官方资料与进一步阅读"><a href="#官方资料与进一步阅读" class="headerlink" title="官方资料与进一步阅读"></a>官方资料与进一步阅读</h3><ul>
+<li><a class="link"   target="_blank" rel="noopener" href="https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SingleCluster.html" >Apache Hadoop：单机部署与进程<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://hadoop.apache.org/docs/current3/hadoop-project-dist/hadoop-hdfs/HdfsUserGuide.html" >Apache Hadoop：HDFS 用户指南<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html" >Apache Hadoop：YARN 架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://hadoop.apache.org/docs/current/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html" >Apache Hadoop：MapReduce Tutorial<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://hive.apache.org/docs/latest/user/hiveserver2-overview/" >Apache Hive：HiveServer2<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://spark.apache.org/docs/latest/cluster-overview.html" >Apache Spark：Cluster Mode Overview<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/flink-architecture/" >Apache Flink：架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://seatunnel.apache.org/docs/architecture/overview/" >Apache SeaTunnel：架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://seatunnel.apache.org/docs/architecture/engine/engine-architecture/" >Apache SeaTunnel：Zeta 引擎<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://github.com/alibaba/DataX/blob/master/introduction.md" >Alibaba DataX：框架介绍<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://nifi.apache.org/nifi-docs/overview.html" >Apache NiFi：架构与核心概念<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://kafka.apache.org/intro/" >Apache Kafka：入门概念<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://debezium.io/documentation/reference/stable/architecture.html" >Debezium：运行架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://doris.apache.org/zh-CN/docs/3.x/gettingStarted/what-is-apache-doris/" >Apache Doris：系统架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://clickhouse.com/docs" >ClickHouse 官方文档<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://trino.io/docs/current/overview/concepts.html" >Trino：基本架构<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+</ul>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> 从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作</li>
+        <li><strong>作者:</strong> wxh</li>
+        <li><strong>创建于
+                :</strong> 2026-11-01 00:00:00</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-11-01 22:41:52
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://blog.private-cloud.site/2026/11/01/OLAP场景相关概念与产品/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/">#大数据</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%88%90/">#数据集成</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/OLAP/">#OLAP</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Hadoop/">#Hadoop</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/HDFS/">#HDFS</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/MapReduce/">#MapReduce</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Spark/">#Spark</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Flink/">#Flink</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/CDC/">#CDC</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Apache-SeaTunnel/">#Apache SeaTunnel</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Apache-Doris/">#Apache Doris</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/03/05/Ntfy%E6%90%AD%E5%BB%BA%E4%B8%8E%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86%E6%95%99%E7%A8%8B/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">Ntfy搭建与权限管理教程</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.js';
+
+      (function() {
+        const startPath = location.pathname;
+        const startTime = Date.now();
+        const retryDelay = 200;
+        const retryLimit = 5000;
+
+        const runWaline = () => {
+          if (location.pathname !== startPath) {
+            return;
+          }
+
+          const container = document.getElementById('waline');
+          if (!container) {
+            if (Date.now() - startTime < retryLimit) {
+              setTimeout(runWaline, retryDelay);
+            }
+            return;
+          }
+
+          if (window.redefineWalineInstance?.destroy) {
+            window.redefineWalineInstance.destroy();
+          }
+
+          container.innerHTML = '';
+          window.redefineWalineInstance = init({
+            el: '#waline',
+            serverURL: 'https://waline.private-cloud.site',
+            path: location.pathname,
+            dark: 'body[class~="dark-mode"]',
+            reaction: true,
+            requiredMeta: ['nick', 'mail'],
+            emoji: ['https://cdn.jsdelivr.net/npm/@waline/emojis@1.2.1/weibo'],
+                      lang: 'zh-CN',
+          });
+        };
+
+        runWaline();
+      })();
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作</div>
+		<ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%98%85%E8%AF%BB%E8%B7%AF%E7%BA%BF%EF%BC%9A%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%BE%88%E9%95%BF%EF%BC%8C%E4%BD%86%E4%B8%8D%E9%9C%80%E8%A6%81%E4%B8%80%E6%AC%A1%E8%AF%BB%E5%AE%8C"><span class="nav-text">阅读路线：这篇文章很长，但不需要一次读完</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%AA%81%E7%84%B6%E8%A6%81%E5%AD%A6%E4%B9%A0%E8%BF%99%E4%BA%9B%E4%B8%9C%E8%A5%BF%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%AC%A1%E5%8C%BB%E7%96%97%E6%95%B0%E6%8D%AE%E6%8A%BD%E5%8F%96%E8%AF%B4%E8%B5%B7"><span class="nav-text">1. 为什么突然要学习这些东西？从一次医疗数据抽取说起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%85%88%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E7%94%BB%E9%9D%A2%EF%BC%9A%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%B3%BB%E7%BB%9F%E5%88%B0%E5%BA%95%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7%EF%BC%9F"><span class="nav-text">2. 先建立一个画面：大数据系统到底长什么样？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%AE%83%E7%9A%84%E6%9C%AC%E8%B4%A8%E8%BF%98%E6%98%AF%E4%B8%80%E4%BA%9B%E6%99%AE%E9%80%9A%E7%9A%84%E8%BD%AF%E4%BB%B6%E8%BF%9B%E7%A8%8B"><span class="nav-text">2.1 它的本质还是一些普通的软件进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8C%BA%E5%88%86%E5%9B%9B%E4%B8%AA%E5%B1%82%E6%AC%A1"><span class="nav-text">2.2 一定要区分四个层次</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E4%B8%80%E6%9D%A1%E6%95%B0%E6%8D%AE%E9%93%BE%E8%B7%AF%EF%BC%9A%E9%87%87%E9%9B%86%E3%80%81%E4%BC%A0%E8%BE%93%E3%80%81%E5%AD%98%E5%82%A8%E3%80%81%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90"><span class="nav-text">2.3 一条数据链路：采集、传输、存储、计算、分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-ETL-%E4%B8%8E-ELT%EF%BC%9A%E5%85%88%E5%A4%84%E7%90%86%E5%86%8D%E5%AD%98%EF%BC%8C%E8%BF%98%E6%98%AF%E5%85%88%E5%AD%98%E5%86%8D%E5%A4%84%E7%90%86%EF%BC%9F"><span class="nav-text">2.4 ETL 与 ELT：先处理再存，还是先存再处理？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Hadoop-%E5%88%B0%E5%BA%95%E6%98%AF%E4%B8%AA%E4%BB%80%E4%B9%88%E4%B8%9C%E8%A5%BF%EF%BC%9F"><span class="nav-text">3. Hadoop 到底是个什么东西？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E9%A6%96%E5%85%88%EF%BC%8C%E5%AE%83%E7%A1%AE%E5%AE%9E%E6%98%AF%E4%B8%80%E5%A5%97%E8%BD%AF%E4%BB%B6%EF%BC%8C%E4%B8%8D%E4%BB%85%E4%BB%85%E6%98%AF%E2%80%9C%E6%80%9D%E8%B7%AF%E2%80%9D"><span class="nav-text">3.1 首先，它确实是一套软件，不仅仅是“思路”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E4%B8%80%E5%A5%97%E7%AE%80%E5%8C%96%E7%9A%84-Hadoop-%E9%9B%86%E7%BE%A4%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7%EF%BC%9F"><span class="nav-text">3.2 一套简化的 Hadoop 集群长什么样？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-HDFS%EF%BC%9A%E5%88%B0%E5%BA%95%E6%98%AF%E5%93%AA%E5%87%A0%E4%B8%AA-Java-%E7%A8%8B%E5%BA%8F%E5%9C%A8%E5%AD%98%E6%96%87%E4%BB%B6%EF%BC%9F"><span class="nav-text">4. HDFS：到底是哪几个 Java 程序在存文件？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-HDFS-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">4.1 HDFS 是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E8%B0%81%E5%9C%A8%E7%AE%A1%E6%96%87%E4%BB%B6%EF%BC%9F%E8%B0%81%E5%9C%A8%E4%BF%9D%E5%AD%98%E6%96%87%E4%BB%B6%EF%BC%9F"><span class="nav-text">4.2 谁在管文件？谁在保存文件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-%E8%B5%B0%E4%B8%80%E9%81%8D%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-text">4.3 走一遍上传文件的过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-%E5%9D%8F%E4%BA%86%E4%B8%80%E5%8F%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BC%9A%E6%80%8E%E6%A0%B7%EF%BC%9F"><span class="nav-text">4.4 坏了一台服务器会怎样？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-HDFS-%E8%B7%9F%E5%B9%B3%E6%97%B6%E4%BD%BF%E7%94%A8%E7%9A%84%E7%A3%81%E7%9B%98%E6%9C%89%E4%BB%80%E4%B9%88%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="nav-text">4.5 HDFS 跟平时使用的磁盘有什么区别？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-YARN%EF%BC%9A%E8%AE%A9%E4%B8%8D%E5%90%8C%E8%AE%A1%E7%AE%97%E7%A8%8B%E5%BA%8F%E5%85%B1%E4%BA%AB%E4%B8%80%E6%89%B9%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-text">5. YARN：让不同计算程序共享一批服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-YARN-%E6%98%AF%E4%BB%80%E4%B9%88%E8%BD%AF%E4%BB%B6%EF%BC%9F"><span class="nav-text">5.1 YARN 是什么软件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E5%90%AF%E5%8A%A8%E5%90%8E%E6%9C%89%E5%93%AA%E4%BA%9B%E8%A7%92%E8%89%B2%EF%BC%9F"><span class="nav-text">5.2 启动后有哪些角色？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E4%B8%80%E4%B8%AA%E4%BD%9C%E4%B8%9A%E6%80%8E%E6%A0%B7%E5%80%9F%E7%94%A8%E6%9C%BA%E5%99%A8%EF%BC%9F"><span class="nav-text">5.3 一个作业怎样借用机器？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-MapReduce%EF%BC%9A%E5%AE%83%E6%97%A2%E6%98%AF%E4%B8%80%E5%A5%97%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B%EF%BC%8C%E4%B9%9F%E6%9C%89%E8%83%BD%E8%BF%90%E8%A1%8C%E7%9A%84%E6%A1%86%E6%9E%B6"><span class="nav-text">6. MapReduce：它既是一套编程模型，也有能运行的框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-1-%E5%85%88%E7%BA%A0%E6%AD%A3%E4%B8%80%E4%B8%AA%E5%AE%B9%E6%98%93%E6%83%B3%E9%94%99%E7%9A%84%E7%94%BB%E9%9D%A2"><span class="nav-text">6.1 先纠正一个容易想错的画面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-2-%E7%94%A8%E2%80%9C%E7%BB%9F%E8%AE%A1%E5%8D%95%E8%AF%8D%E5%87%BA%E7%8E%B0%E6%AC%A1%E6%95%B0%E2%80%9D%E7%90%86%E8%A7%A3-MapReduce"><span class="nav-text">6.2 用“统计单词出现次数”理解 MapReduce</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-3-%E7%9C%9F%E6%AD%A3%E8%BF%90%E8%A1%8C%E6%97%B6%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">6.3 真正运行时发生了什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-MapReduce-%E7%9A%84%E5%B1%80%E9%99%90"><span class="nav-text">6.4 MapReduce 的局限</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-Hive%EF%BC%9A%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6%E5%9C%A8-HDFS%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%83%BD%E5%86%99-SQL%EF%BC%9F"><span class="nav-text">7. Hive：数据文件在 HDFS，为什么还能写 SQL？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-1-Hive-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">7.1 Hive 是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-2-Hive-%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9C%89%E5%93%AA%E4%BA%9B%E7%BB%84%E4%BB%B6%EF%BC%9F"><span class="nav-text">7.2 Hive 运行时有哪些组件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-3-%E4%B8%80%E6%9D%A1-SQL-%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84%EF%BC%9F"><span class="nav-text">7.3 一条 SQL 是怎么跑起来的？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-Spark%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%AF%B4%E5%AE%83%E6%98%AF%E2%80%9C%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E%E2%80%9D%EF%BC%9F"><span class="nav-text">8. Spark：为什么说它是“计算引擎”？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#8-1-Spark-%E6%98%AF%E4%BB%80%E4%B9%88%E8%BD%AF%E4%BB%B6%EF%BC%9F"><span class="nav-text">8.1 Spark 是什么软件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-2-Spark-%E5%90%AF%E5%8A%A8%E5%90%8E%E6%9C%89%E5%93%AA%E4%BA%9B%E8%A7%92%E8%89%B2%EF%BC%9F"><span class="nav-text">8.2 Spark 启动后有哪些角色？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-3-%E8%B5%B0%E4%B8%80%E9%81%8D-Spark-SQL-%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="nav-text">8.3 走一遍 Spark SQL 的执行过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-4-Spark-%E4%B8%8E-Hive-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB%EF%BC%9F"><span class="nav-text">8.4 Spark 与 Hive 到底是什么关系？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-Flink%EF%BC%9A%E4%B8%80%E6%9D%A1%E6%B0%B8%E8%BF%9C%E4%B8%8D%E5%81%9C%E6%AD%A2%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%8C%E8%B0%81%E5%9C%A8%E7%AE%A1%E7%90%86%EF%BC%9F"><span class="nav-text">9. Flink：一条永远不停止的数据流水线，谁在管理？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#9-1-Flink-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">9.1 Flink 是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-2-Flink-%E9%9B%86%E7%BE%A4%E6%9C%89%E5%93%AA%E4%BA%9B%E8%BF%9B%E7%A8%8B%EF%BC%9F"><span class="nav-text">9.2 Flink 集群有哪些进程？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-3-%E7%94%A8%E2%80%9C%E6%8C%81%E7%BB%AD%E7%BB%9F%E8%AE%A1%E2%80%9D%E8%B5%B0%E4%B8%80%E9%81%8D-Flink-%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-text">9.3 用“持续统计”走一遍 Flink 数据流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-4-State-%E4%B8%8E-Checkpoint-%E5%88%B0%E5%BA%95%E4%BF%9D%E5%AD%98%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">9.4 State 与 Checkpoint 到底保存什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-5-%E4%BB%80%E4%B9%88%E5%8F%AB%E2%80%9CFlink-%E7%94%9F%E6%80%81%E2%80%9D%EF%BC%9F"><span class="nav-text">9.5 什么叫“Flink 生态”？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-6-Hadoop-%E5%91%A8%E8%BE%B9%E7%9A%84%E7%AE%A1%E7%90%86%E8%BD%AF%E4%BB%B6%EF%BC%9A%E4%B8%8D%E6%98%AF-Hadoop-%E6%A0%B8%E5%BF%83%E8%BF%9B%E7%A8%8B"><span class="nav-text">9.6 Hadoop 周边的管理软件：不是 Hadoop 核心进程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86%E5%B7%A5%E5%85%B7%EF%BC%9A%E5%AE%83%E4%BB%AC%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E2%80%9C%E8%B7%91%E2%80%9D%E8%B5%B7%E6%9D%A5%E7%9A%84%EF%BC%9F"><span class="nav-text">10. 数据采集工具：它们到底是怎么“跑”起来的？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#10-1-DataX%EF%BC%9A%E5%90%AF%E5%8A%A8%E4%B8%80%E4%B8%AA%E7%A6%BB%E7%BA%BF%E5%90%8C%E6%AD%A5%E4%BD%9C%E4%B8%9A"><span class="nav-text">10.1 DataX：启动一个离线同步作业</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-2-Apache-SeaTunnel%EF%BC%9A%E4%B8%93%E9%97%A8%E6%89%A7%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%9A%84%E5%BC%95%E6%93%8E"><span class="nav-text">10.2 Apache SeaTunnel：专门执行数据同步任务的引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-3-Apache-NiFi%EF%BC%9A%E6%8B%96%E6%8B%BD%E6%95%B0%E6%8D%AE%E6%B5%81%EF%BC%8C%E5%90%8E%E5%8F%B0%E8%BF%90%E8%A1%8C-Processor"><span class="nav-text">10.3 Apache NiFi：拖拽数据流，后台运行 Processor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-4-%E7%94%A8%E4%B8%80%E5%BC%A0%E8%A1%A8%E7%9C%8B%E6%B8%85%E4%B8%89%E4%B8%AA%E5%B7%A5%E5%85%B7%E7%9A%84%E8%BF%90%E8%A1%8C%E5%BD%A2%E6%80%81"><span class="nav-text">10.4 用一张表看清三个工具的运行形态</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-Kafka%EF%BC%9A%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%85%88%E8%BF%9B%E4%B8%80%E4%B8%AA%E2%80%9C%E4%B8%AD%E8%BD%AC%E7%AB%99%E2%80%9D%EF%BC%9F"><span class="nav-text">11. Kafka：数据为什么要先进一个“中转站”？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#11-1-Kafka-%E6%98%AF%E4%BB%80%E4%B9%88%E8%BD%AF%E4%BB%B6%EF%BC%9F"><span class="nav-text">11.1 Kafka 是什么软件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#11-2-%E8%BF%90%E8%A1%8C%E4%B8%AD%E7%9A%84-Kafka-%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7%EF%BC%9F"><span class="nav-text">11.2 运行中的 Kafka 长什么样？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#11-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%AE%A9-Source-%E7%9B%B4%E6%8E%A5%E5%86%99%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%9F"><span class="nav-text">11.3 为什么不让 Source 直接写数据库？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-CDC%EF%BC%9A%E5%88%B0%E5%BA%95%E6%98%AF%E8%B0%81%E5%9C%A8%E2%80%9C%E7%9B%AF%E7%9D%80%E6%95%B0%E6%8D%AE%E5%BA%93%E2%80%9D%EF%BC%9F"><span class="nav-text">12. CDC：到底是谁在“盯着数据库”？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#12-1-CDC-%E6%98%AF%E6%8A%80%E6%9C%AF%E6%96%B9%E5%BC%8F%EF%BC%8C%E4%B8%8D%E6%98%AF%E4%B8%80%E4%B8%AA%E8%BD%AF%E4%BB%B6%E5%90%8D%E7%A7%B0"><span class="nav-text">12.1 CDC 是技术方式，不是一个软件名称</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-2-Debezium-%E7%9C%9F%E6%AD%A3%E9%83%A8%E7%BD%B2%E5%9C%A8%E5%93%AA%E9%87%8C%EF%BC%9F"><span class="nav-text">12.2 Debezium 真正部署在哪里？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-3-Flink-CDC%E3%80%81Canal%E3%80%81Maxwell-%E5%8F%88%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">12.3 Flink CDC、Canal、Maxwell 又是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-4-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BD%93%E5%89%8D%E5%8C%BB%E7%96%97%E9%A1%B9%E7%9B%AE%E4%B8%8D%E6%80%A5%E7%9D%80%E4%B8%8A-CDC%EF%BC%9F"><span class="nav-text">12.4 为什么当前医疗项目不急着上 CDC？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-5-%E5%A6%82%E6%9E%9C%E6%95%B0%E6%8D%AE%E6%9D%A5%E8%87%AA%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E6%88%96-HTTP-%E6%8E%A5%E5%8F%A3%E5%91%A2%EF%BC%9F"><span class="nav-text">12.5 如果数据来自日志文件或 HTTP 接口呢？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E6%95%B0%E6%8D%AE%E5%A6%82%E4%BD%95%E4%BF%9D%E5%AD%98%EF%BC%9AMySQL%E3%80%81HDFS%E3%80%81%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E4%B8%8E%E6%95%B0%E6%8D%AE%E6%B9%96"><span class="nav-text">13. 数据如何保存：MySQL、HDFS、对象存储与数据湖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#13-1-MySQL-%E5%92%8C-HDFS-%E4%B8%8D%E6%98%AF%E7%AB%9E%E4%BA%89%E5%85%B3%E7%B3%BB"><span class="nav-text">13.1 MySQL 和 HDFS 不是竞争关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-2-%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">13.2 对象存储是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-3-Parquet-ORC-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E6%95%B0%E6%8D%AE%E6%B9%96%E8%A1%A8%E6%A0%BC%E5%BC%8F%E5%8F%88%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">13.3 Parquet &#x2F; ORC 是什么？数据湖表格式又是什么？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-OLAP-%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%9ADoris-%E5%92%8C-ClickHouse-%E7%A9%B6%E7%AB%9F%E8%BF%90%E8%A1%8C%E4%BA%86%E5%93%AA%E4%BA%9B%E4%B8%9C%E8%A5%BF%EF%BC%9F"><span class="nav-text">14. OLAP 数据库：Doris 和 ClickHouse 究竟运行了哪些东西？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#14-1-%E5%85%88%E7%90%86%E8%A7%A3-OLTP-%E4%B8%8E-OLAP-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-text">14.1 先理解 OLTP 与 OLAP 的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-2-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%88%97%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E7%BB%8F%E5%B8%B8%E5%BE%88%E5%BF%AB%EF%BC%9F"><span class="nav-text">14.2 为什么列式数据库经常很快？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-3-Doris-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E5%90%AF%E5%8A%A8%E4%B9%8B%E5%90%8E%E6%9C%89%E5%93%AA%E4%BA%9B%E8%BF%9B%E7%A8%8B%EF%BC%9F"><span class="nav-text">14.3 Doris 是什么？启动之后有哪些进程？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-4-ClickHouse-%E5%8F%88%E6%98%AF%E4%BB%80%E4%B9%88%E5%BD%A2%E6%80%81%EF%BC%9F"><span class="nav-text">14.4 ClickHouse 又是什么形态？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-5-Doris-%E4%B8%8E-ClickHouse-%E6%80%8E%E4%B9%88%E9%80%89%EF%BC%9F"><span class="nav-text">14.5 Doris 与 ClickHouse 怎么选？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-6-Trino-%E5%92%8C-Hive-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B9%9F%E5%87%BA%E7%8E%B0%E5%9C%A8%E5%88%86%E6%9E%90%E6%B8%85%E5%8D%95%E9%87%8C%EF%BC%9F"><span class="nav-text">14.6 Trino 和 Hive 为什么也出现在分析清单里？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E6%89%B9%E9%87%8F%E6%95%B0%E6%8D%AE%E6%8A%BD%E5%8F%96%EF%BC%9A%E7%9C%9F%E6%AD%A3%E9%9A%BE%E7%9A%84%E4%B8%8D%E6%98%AF%E5%86%99-SELECT"><span class="nav-text">15. 批量数据抽取：真正难的不是写 SELECT</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#15-1-ResultSet-next-%E4%B8%8D%E4%B8%80%E5%AE%9A%E6%98%AF%E4%B8%80%E6%9D%A1%E4%B8%80%E6%AC%A1%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82"><span class="nav-text">15.1 ResultSet.next() 不一定是一条一次网络请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#15-2-Offset-%E5%88%86%E9%A1%B5%E5%92%8C-Keyset-%E5%88%86%E9%A1%B5"><span class="nav-text">15.2 Offset 分页和 Keyset 分页</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#15-3-%E4%B8%BA%E4%BB%80%E4%B9%88-Checkpoint-%E5%92%8C%E2%80%9C%E5%86%99%E5%85%A5%E6%88%90%E5%8A%9F%E2%80%9D%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B%EF%BC%9F"><span class="nav-text">15.3 为什么 Checkpoint 和“写入成功”不是一回事？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#15-4-%E6%97%A0%E7%B4%A2%E5%BC%95%E5%A4%A7%E8%A1%A8%EF%BC%8C%E6%88%90%E7%86%9F%E5%B7%A5%E5%85%B7%E4%B9%9F%E4%B8%8D%E8%83%BD%E5%87%AD%E7%A9%BA%E4%BF%AE%E5%A5%BD"><span class="nav-text">15.4 无索引大表，成熟工具也不能凭空修好</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E5%8C%BB%E7%96%97%E6%95%B0%E6%8D%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E9%9C%80%E8%A6%81%E8%87%AA%E5%B7%B1%E7%9A%84-Java-%E4%B8%9A%E5%8A%A1%E5%A4%84%E7%90%86%E5%B1%82%EF%BC%9F"><span class="nav-text">16. 医疗数据为什么还需要自己的 Java 业务处理层？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#16-1-%E6%82%A3%E8%80%85%E7%BA%A7%E4%B8%8E%E5%B0%B1%E8%AF%8A%E7%BA%A7%E6%98%AF%E4%B8%A4%E4%B8%AA%E4%B8%8D%E5%90%8C%E9%97%AE%E9%A2%98"><span class="nav-text">16.1 患者级与就诊级是两个不同问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#16-2-%E4%B8%80%E4%B8%AA%E6%9B%B4%E5%90%88%E7%90%86%E7%9A%84%E8%81%8C%E8%B4%A3%E6%8B%86%E5%88%86"><span class="nav-text">16.2 一个更合理的职责拆分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#16-3-%E6%95%B0%E6%8D%AE%E6%89%B9%E6%AC%A1%E7%89%88%E6%9C%AC%EF%BC%8C%E4%B9%9F%E4%B8%8D%E8%83%BD%E4%BB%A3%E6%9B%BF%E5%B0%B1%E8%AF%8A%E5%85%B3%E7%B3%BB"><span class="nav-text">16.3 数据批次版本，也不能代替就诊关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E4%B8%80%E6%AC%A1%E5%AE%8C%E6%95%B4%E7%9A%84%E5%AE%9E%E6%88%98%E6%8E%A8%E6%BC%94%EF%BC%9A%E4%BB%8E-Oracle-%E5%88%B0%E6%99%BA%E8%83%BD%E6%A3%80%E7%B4%A2"><span class="nav-text">17. 一次完整的实战推演：从 Oracle 到智能检索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E9%80%89%E6%8B%A9%E9%87%87%E9%9B%86%E6%96%B9%E5%BC%8F"><span class="nav-text">第一步：选择采集方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E6%89%A7%E8%A1%8C%E6%8A%BD%E5%8F%96%E4%BB%BB%E5%8A%A1"><span class="nav-text">第二步：执行抽取任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E5%86%99%E5%85%A5%E5%8F%97%E6%8E%A7%E5%AD%98%E5%82%A8"><span class="nav-text">第三步：写入受控存储</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9AJava-%E9%A2%86%E5%9F%9F%E6%9C%8D%E5%8A%A1%E5%8A%A0%E5%B7%A5"><span class="nav-text">第四步：Java 领域服务加工</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E5%BB%BA%E7%AB%8B%E5%88%86%E6%9E%90%E5%B1%82"><span class="nav-text">第五步：建立分析层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E5%85%AD%E6%AD%A5%EF%BC%9A%E5%90%91%E5%8C%BB%E7%94%9F%E6%8F%90%E4%BE%9B%E6%A3%80%E7%B4%A2"><span class="nav-text">第六步：向医生提供检索</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-PoC%EF%BC%9A%E5%A6%82%E4%BD%95%E9%AA%8C%E8%AF%81%E4%B8%80%E4%B8%AA%E4%BA%A7%E5%93%81%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E9%80%82%E5%90%88%EF%BC%9F"><span class="nav-text">18. PoC：如何验证一个产品是否真的适合？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E4%B8%80%E5%BC%A0%E2%80%9C%E8%BD%AF%E4%BB%B6%E8%BF%90%E8%A1%8C%E5%BD%A2%E6%80%81%E2%80%9D%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="nav-text">19. 一张“软件运行形态”速查表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E7%BB%93%E8%AF%AD%EF%BC%9A%E7%9C%8B%E5%88%B0%E6%96%B0%E5%90%8D%E8%AF%8D%EF%BC%8C%E5%85%88%E9%97%AE%E5%AE%83%E2%80%9C%E4%BD%8F%E5%9C%A8%E5%93%AA%E9%87%8C%E3%80%81%E5%B9%B2%E4%BB%80%E4%B9%88%E2%80%9D"><span class="nav-text">20. 结语：看到新名词，先问它“住在哪里、干什么”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E8%B5%84%E6%96%99%E4%B8%8E%E8%BF%9B%E4%B8%80%E6%AD%A5%E9%98%85%E8%AF%BB"><span class="nav-text">官方资料与进一步阅读</span></a></li></ol></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+            <div class="customize-info my-1">无限思考 · 无限进步 · 无限创造</div>
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2025</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">wxh</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 21 篇文章
+                    </span>
+                    
+                        <span>
+                            共 47.2k 字
+                        </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.9.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container" role="dialog" aria-modal="true" aria-label="图片查看器">
+	<button class="image-viewer-close" type="button" aria-label="关闭">
+		<i class="fa-solid fa-xmark"></i>
+	</button>
+	<button class="image-viewer-prev" type="button" aria-label="上一页">
+		<i class="fa-solid fa-chevron-left"></i>
+	</button>
+	<div class="image-viewer-frame">
+		<img src="" alt="">
+	</div>
+	<div class="image-viewer-exif-panel hidden absolute left-1/2 bottom-20 -translate-x-1/2 w-[min(92vw,420px)] max-h-[60vh] overflow-hidden rounded-2xl bg-background-color-transparent-80 p-4 text-left shadow-redefine-flat backdrop-blur-md" role="dialog" aria-label="EXIF" aria-hidden="true">
+		<div class="flex items-center justify-between mb-3">
+			<span class="text-sm font-semibold text-first-text-color">EXIF</span>
+			<button class="image-viewer-exif-close flex h-8 w-8 items-center justify-center rounded-full bg-background-color-transparent-80 text-first-text-color transition hover:bg-background-color-transparent-40" type="button" aria-label="关闭">
+				<i class="fa-solid fa-xmark text-[0.65rem]"></i>
+			</button>
+		</div>
+		<div class="image-viewer-exif-cards grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1 scrollbar-hide"></div>
+		<template class="image-viewer-exif-card-template">
+			<div class="rounded-lg bg-background-color-transparent-40 px-3 py-2">
+				<div class="image-viewer-exif-card-header flex items-center gap-2 mb-1">
+					<i class="image-viewer-exif-card-icon fa-solid fa-circle-info text-xs text-third-text-color"></i>
+					<div class="image-viewer-exif-card-title text-xs font-semibold text-first-text-color"></div>
+				</div>
+				<div class="image-viewer-exif-card-items flex flex-col gap-1"></div>
+			</div>
+		</template>
+	</div>
+	<button class="image-viewer-exif-toggle flex items-center gap-2 hidden absolute left-1/2 bottom-6 -translate-x-1/2 rounded-full border border-border-color bg-background-color-transparent-80 px-4 py-2 text-first-text-color backdrop-blur-md transition hover:bg-background-color-transparent-40" type="button" aria-label="EXIF" aria-expanded="false">
+		<i class="fa-solid fa-circle-info text-xs"></i>
+		<span class="text-xs font-semibold uppercase tracking-wider">EXIF</span>
+	</button>
+	<button class="image-viewer-next" type="button" aria-label="下一页">
+		<i class="fa-solid fa-chevron-right"></i>
+	</button>
+</div>
+
+
+	
+	<div class="search-pop-overlay">
+	<div class="popup search-popup">
+		<div class="search-header">
+			<span class="search-input-field-pre">
+				<i class="fa-solid fa-keyboard"></i>
+			</span>
+			<div class="search-input-container">
+				<input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="站内搜索您需要的内容..." spellcheck="false" type="search" class="search-input">
+			</div>
+			<span class="popup-btn-close">
+				<i class="fa-solid fa-times"></i>
+			</span>
+		</div>
+		<div id="search-result">
+			<div id="no-result">
+				<i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+			</div>
+		</div>
+	</div>
+</div>
+	
+
+</main>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/Swup.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupSlideTheme.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupScriptsPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupProgressPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupScrollPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupPreloadPlugin.min.js" ></script>
+<script>
+    window.swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+
+    window.dispatchEvent(
+        new CustomEvent("redefine:swup:ready", {
+            detail: {
+                swup: window.swup,
+            },
+        }),
+    );
+</script>
+
+
+
+
+	<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/main.js" ></script>
+
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/odometer.min.js" ></script>
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/assets/odometer-theme-minimal.css">
+
+
+
+
+
+
+  <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/Typed.min.js" ></script>
+
+
+
+
+
+
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/moment-with-locales.min.js" data-swup-reload-script></script>
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/pangu.min.js" ></script>
+
+
+	
+</body>
+
+</html>
