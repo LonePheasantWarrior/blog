@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    
+    <meta name="author" content="wxh">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes ASAP (before DOMContentLoaded)
+            (function() {
+                const addBodyClass = () => {
+                    const b = document.body;
+                    if (!b) return false;
+                    b.classList.add(theme + "-mode");
+                    return true;
+                };
+
+                // Try immediately
+                if (addBodyClass()) return;
+
+                // Observe until body exists
+                const mo = new MutationObserver(() => {
+                    if (addBodyClass()) mo.disconnect();
+                });
+                mo.observe(document.documentElement, { childList: true, subtree: true });
+            })();
+        })();
+    </script>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+        
+        
+        
+            <link rel="preconnect" href="https://evan.beee.top" crossorigin>
+        
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://blog.private-cloud.site/2026/11/02/elasticsearch扫盲/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+        
+        <meta name="description" content="晓虎的博客 —— 无限思考，无限进步，无限创造。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 入门扫盲：ES 到底是什么、怎样工作，以及「倒排索引」为什么快？">
+<meta property="og:url" content="https://blog.private-cloud.site/2026/11/02/Elasticsearch%E6%89%AB%E7%9B%B2/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="晓虎的博客 —— 无限思考，无限进步，无限创造。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.private-cloud.site/images/banner_light_wuxia.webp">
+<meta property="article:published_time" content="2026-11-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-05T02:07:35.853Z">
+<meta property="article:author" content="wxh">
+<meta property="article:tag" content="Elasticsearch">
+<meta property="article:tag" content="Lucene">
+<meta property="article:tag" content="倒排索引">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="大数据">
+<meta property="article:tag" content="搜索引擎">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.private-cloud.site/images/banner_light_wuxia.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/favicon.webp" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.webp">
+    <meta name="theme-color" content="#A4503B">
+    <link rel="shortcut icon" href="/images/favicon.webp">
+    <!--- Page Info-->
+    
+    <title>
+        
+            Elasticsearch 入门扫盲：ES 到底是什么、怎样工作，以及「倒排索引」为什么快？ | 晓虎的博客
+        
+    </title>
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/Chillax/chillax.css">
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/css/build/tailwind.css">
+    
+
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/GeistMono/geist-mono.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fonts/Geist/geist.css">
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/anime.min.js" ></script>
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"blog.private-cloud.site","root":"/","language":"zh-CN","path":"search.json"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A4503B","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":true},"scroll_progress":{"bar":true,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":true,"custom_message":"欢迎访问我的小窝"},"side_tools":{"gear_rotation":true,"auto_expand":true},"open_graph":{"enable":true,"image":"/images/banner_light_wuxia.webp","description":"晓虎的博客 —— 无限思考，无限进步，无限创造。"},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"static","image":{"light":"images/banner_light_wuxia.webp","dark":"images/banner_dark4.webp"},"title":"晓虎的博客","subtitle":{"text":["无限思考","无限进步","无限创造"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"style":"default","links":[{"icon":"fa-brands fa-github","url":"https://github.com/LonePheasantWarrior"},{"icon":"fa-brands fa-twitter","url":null},{"icon":"fa-solid fa-at","url":null},{"icon":"fa-brands fa-telegram","url":null},{"icon":"","url":null}],"qrs":[{"icon":"fa-brands fa-weixin","qr":null},{"icon":"/images/custom-icon.svg","qr":null}]}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1","theme":{"light":"default","dark":"dark"}}},"version":"2.9.0","navbar":{"auto_hide":true,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}},"search":{"enable":true,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur","masonry":{"batch_size":12,"initial_batch_size":24}},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":"欢迎访问我的小窝","show_on_mobile":true,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"Essays":{"path":"/essays","icon":"fa-regular fa-pen"}}},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footer":{"runtime":true,"icon":"<i class=\"fa-solid fa-heart fa-beat\" style=\"--fa-animation-duration: 0.5s; color: #f54545\"></i>","start":"2025/3/18 12:00:01","statistics":true,"customize":"无限思考 · 无限进步 · 无限创造","icp":{"enable":false,"number":null,"url":null}},"footerStart":"2025/3/18 12:00:01","mermaid":{"style":{"light":"default","dark":"dark"}}};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.i18n = {"search":"站内搜索您需要的内容...","toc":"目录","prev":"上一页","next":"下一页","prev_posts":"上一篇","next_posts":"下一篇","page":"第 %d 页","recent_posts":"最新文章","share":"分享","powered_by":"由 %s 驱动","theme":"主题","rss_feed":"RSS Feed","category":"分类","categories":"分类","tag":"标签","tags":"标签","post":"文章","posts":"文章","tagcloud":"标签云","comment":"评论","comments":"评论","top":"置顶","sticky":"置顶","go-back-home":"回到首页","masonry_loading":"照片加载中...","image_viewer":"图片查看器","close":"关闭","exif":{"title":"EXIF","cards":{"camera":"相机","lens":"镜头","exposure":"曝光","other":"其他"},"fields":{"make":"品牌","model":"机型","date_taken":"拍摄时间","lens_model":"镜头","focal_length":"焦距","focus_mode":"对焦模式","shutter":"快门","aperture":"光圈","iso":"感光度","exposure_program":"曝光程序","exposure_compensation":"曝光补偿","metering_mode":"测光模式","flash":"闪光灯","white_balance":"白平衡","latitude":"纬度","longitude":"经度","altitude":"海拔"},"status":{"loading":"加载中...","no_exif":"无 EXIF 信息","library_missing":"EXIF 库未加载","image_source_missing":"图片地址不可用","unavailable":"EXIF 不可用（可能被 CORS 阻止或缺少元数据）","flag_unavailable":"EXIF 不可用"}},"home":"首页","archive":"归档","archives":"归档","about":"关于","links":"链接","link":"链接","friends":"友情链接","friend":"友情链接","timeline":"时间轴","shuoshuo":"说说","bookmarks":"书签","site_uv":"访问人数","site_pv":"总访问量","read_more":"阅读全文","wordcount":"字","min2read":"分钟","changelog":"更新日志","status":"状态","runtime":"博客已运行","days":"天","hours":"小时","minutes":"分钟","seconds":"秒","optimized_by":"并由 Evan 进行优化","rights":"版权所有","site_posts":"共撰写了 %s 篇文章","site_wordcount":"共 %s 字","copyright":{"title":"标题","author":"作者","link":"链接","create_time":"创建于","update_time":"更新于","license_title":"版权声明","license_content":"本文章采用 %s 进行许可。","all_rights_reserved":"版权所有 &#169 %s，禁止转载。","public_domain":"本文为公有领域作品，可自由转载、引用。"},"ago":{"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"},"create_time":"创建","update_time":"更新","expired":"这篇文章最后更新于 %s 天前，内容可能已经过时。"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/fontawesome.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/brands.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/solid.min.css">
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/fontawesome/regular.min.css">
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.1.2"><script defer src="https://photon.private-cloud.site:3000/script.js" data-website-id="ad63bf5f-4eef-43bb-9fc3-b64cdef14089"></script><script defer src="https://photon.private-cloud.site:3000/recorder.js" data-website-id="ad63bf5f-4eef-43bb-9fc3-b64cdef14089"></script></head>
+
+
+<body>
+	<div class="progress-bar-container">
+	
+	<span class="scroll-progress-bar"></span>
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        欢迎访问我的小窝
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/favicon.webp" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                晓虎的博客
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-regular fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/categories"
+                                        >
+                                    <i class="fa-regular fa-folder fa-fw"></i>
+                                    分类
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/essays"
+                                        >
+                                    <i class="fa-regular fa-pen fa-fw"></i>
+                                    ESSAYS
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-regular fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/categories"
+                        >
+                            <span>
+                                分类
+                            </span>
+                            
+                                <i class="fa-regular fa-folder fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/essays"
+                        >
+                            <span>
+                                ESSAYS
+                            </span>
+                            
+                                <i class="fa-regular fa-pen fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+                
+                    
+                    
+                    
+                    
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">61</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">23</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">Elasticsearch 入门扫盲：ES 到底是什么、怎样工作，以及「倒排索引」为什么快？</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] shrink-0 rounded-medium border border-border-color p-px">
+				<img src="/images/avatar.webp">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">wxh</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-11-02</span>
+        <span class="mobile">2026-11-02</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-11-05 10:07:35</span>
+            <span class="mobile">2026-11-05 10:07:35</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/IT/">IT</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Elasticsearch/">Elasticsearch</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/">搜索引擎</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/">倒排索引</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/Lucene/">Lucene</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/">大数据</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+        <span class="article-wordcount article-meta-item">
+            <i class="fa-regular fa-typewriter"></i>&nbsp;<span>7.4k 字</span>
+        </span>
+    
+    
+        <span class="article-min2read article-meta-item">
+            <i class="fa-regular fa-clock"></i>&nbsp;<span>27 分钟</span>
+        </span>
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<blockquote>
+<p>Elasticsearch它究竟是一套什么软件？为什么它的 Index 居然能类比 MySQL 的表？一个索引拆成多个 Shard 之后，到底是谁在搜索？尤其是「倒排索引」这个名字，听起来像某种神奇算法，好像把索引倒过来，搜索就突然变快了。</p>
+<p>这篇文章不假设读者熟悉搜索引擎。我们从一份病历的搜索需求出发，先认识软件与进程，再沿着一次数据写入和查询的实际路线，亲手构造一份倒排索引，最后用几条可以执行的请求验证它的工作方式。</p>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="一、为什么需要-Elasticsearch？先从一个搜索框说起"><a href="#一、为什么需要-Elasticsearch？先从一个搜索框说起" class="headerlink" title="一、为什么需要 Elasticsearch？先从一个搜索框说起"></a>一、为什么需要 Elasticsearch？先从一个搜索框说起</h2><p>假设我们在开发医疗科研平台，已经积累了数百万份电子病历。医生想搜索：</p>
+<p><strong>「找出病历中同时提到胸痛和呼吸困难的患者。」</strong></p>
+<p>如果病历存放在 MySQL 中，一个直观的写法是：</p>
+<div class="code-container" data-rel="Sql"><figure class="iseeu highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> record_id, patient_id, content</span><br><span class="line"><span class="keyword">FROM</span> medical_record</span><br><span class="line"><span class="keyword">WHERE</span> content <span class="keyword">LIKE</span> <span class="string">&#x27;%胸痛%&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> content <span class="keyword">LIKE</span> <span class="string">&#x27;%呼吸困难%&#x27;</span>;</span><br></pre></td></tr></table></figure></div>
+
+<p>数据少的时候，这样做没有什么问题。但是随着病历增长，新的困难会陆续出现：</p>
+<ol>
+<li><code>LIKE &#39;%词语%&#39;</code> 通常难以高效利用普通 B+Tree 索引，可能需要检查大量文本。</li>
+<li>搜索要求越来越丰富：支持多个词、短语、错别字、相关性排序、高亮显示等。</li>
+<li>数据分散在多台机器，如何并行检索并把结果合并？</li>
+<li>除了正文，还想按照医院、年龄、日期等字段过滤结果。</li>
+</ol>
+<p>这些需求催生了专门的搜索引擎。<strong>Elasticsearch</strong>（简称 <strong>ES</strong>）就是其中的代表。</p>
+<p>它是一款<strong>分布式搜索与分析引擎</strong>，核心全文检索能力建立在 <strong>Apache Lucene</strong> 上。今天的 ES 还支持聚合分析、地理位置查询和向量搜索等功能，但最容易帮助我们理解它的切入点，仍然是<strong>全文搜索</strong>。</p>
+<p>先记住一个重要区别：</p>
+<ul>
+<li><strong>MySQL</strong> 首先解决业务记录的存储、事务和查询问题；可以搜索，也有 FULLTEXT 等能力。</li>
+<li><strong>Elasticsearch</strong> 把「如何快速找到匹配的文档」作为核心设计目标；它不意味着能替代业务数据库的事务和关联语义。</li>
+</ul>
+<p>换句话说，ES 不是给 MySQL 加速的魔法插件，而是一套需要部署、存储数据、建立索引并维护的独立软件。</p>
+<h2 id="二、先把几个容易混淆的名字认清楚"><a href="#二、先把几个容易混淆的名字认清楚" class="headerlink" title="二、先把几个容易混淆的名字认清楚"></a>二、先把几个容易混淆的名字认清楚</h2><p>刚入门时，最头疼的不是技术难，而是同一个英文词在不同体系里含义不一样。</p>
+<table>
+<thead>
+<tr>
+<th>ES 术语</th>
+<th>先这样理解</th>
+<th>对照 MySQL 时要注意什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Cluster（集群）</strong></td>
+<td>多个 ES 节点组成的一套服务</td>
+<td>不等于一个 MySQL Database</td>
+</tr>
+<tr>
+<td><strong>Node（节点）</strong></td>
+<td>一个正在运行的 ES 服务实例</td>
+<td>更接近一个服务进程，而非一张表</td>
+</tr>
+<tr>
+<td><strong>Index（索引）</strong></td>
+<td>一组可搜索文档的逻辑集合</td>
+<td><strong>大致类似 Table，不是 MySQL 的二级索引</strong></td>
+</tr>
+<tr>
+<td><strong>Document（文档）</strong></td>
+<td>一条通常以 JSON 表示的记录</td>
+<td>大致类似 Row</td>
+</tr>
+<tr>
+<td><strong>Field（字段）</strong></td>
+<td>文档中的一个属性</td>
+<td>大致类似 Column</td>
+</tr>
+<tr>
+<td><strong>Mapping（映射）</strong></td>
+<td>字段类型与索引方式的定义</td>
+<td>类似表结构，但语义不完全一样</td>
+</tr>
+<tr>
+<td><strong>Shard（分片）</strong></td>
+<td>一部分文档的独立搜索单元</td>
+<td>不是普通的文件切片</td>
+</tr>
+<tr>
+<td><strong>Replica（副本）</strong></td>
+<td>主分片的一份复制</td>
+<td>用于容错，也可以分担读请求</td>
+</tr>
+</tbody></table>
+<h3 id="2-1-为什么-Index-会被类比成-Table？"><a href="#2-1-为什么-Index-会被类比成-Table？" class="headerlink" title="2.1 为什么 Index 会被类比成 Table？"></a>2.1 为什么 Index 会被类比成 Table？</h3><p>在 MySQL 中，我们习惯这样思考：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Database: hospital</span><br><span class="line">└── Table: medical_record</span><br><span class="line">    ├── Row 101</span><br><span class="line">    ├── Row 102</span><br><span class="line">    └── Index: idx_patient_id   ← 给表建立的辅助索引</span><br></pre></td></tr></table></figure></div>
+
+<p>但在 Elasticsearch 中，是这样组织数据的：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Elasticsearch Cluster</span><br><span class="line">└── Index: medical_records    ← 一组可搜索的文档</span><br><span class="line">    ├── Document 101</span><br><span class="line">    ├── Document 102</span><br><span class="line">    ├── Mapping（字段结构）</span><br><span class="line">    └── Shards（实际承载数据的分片）</span><br></pre></td></tr></table></figure></div>
+
+<p>所以，<strong>ES Index 与 MySQL Table 的类比，来自「它们都组织一组记录」这一点，而不是底层数据结构相同。</strong></p>
+<p>为什么偏偏叫 Index，不叫 Table？因为 ES 继承了搜索引擎 Lucene 的术语。在 Lucene 的世界里，<strong>Index 原本就指一套已经组织好、可以检索的文档及其索引结构</strong>。ES 在这层能力上又增加了网络接口、集群管理、分片和复制。</p>
+<p>这不是谁用错了「索引」一词，只是关系型数据库和搜索引擎的关注点不同：前者从「表」出发，后者从「可检索的文档集合」出发。</p>
+<h3 id="2-2-Document-是不是只能存大段文字？"><a href="#2-2-Document-是不是只能存大段文字？" class="headerlink" title="2.2 Document 是不是只能存大段文字？"></a>2.2 Document 是不是只能存大段文字？</h3><p>不是。一个 ES Document 通常是 JSON 对象：</p>
+<div class="code-container" data-rel="Json"><figure class="iseeu highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;record_id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;R101&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;patient_id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;P001&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;age&quot;</span><span class="punctuation">:</span> <span class="number">56</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;visit_date&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2026-10-01&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="string">&quot;患者反复胸痛，伴有呼吸困难&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>它既有结构化字段，也有非结构化文本。ES 的 <strong>Mapping</strong> 决定这些字段如何处理，例如：</p>
+<ul>
+<li><code>keyword</code>：把患者 ID、病历 ID 等作为完整词项，用于精确匹配。</li>
+<li><code>integer</code>：保存整数，可以做数值范围过滤。</li>
+<li><code>date</code>：日期字段，可以筛选时间范围。</li>
+<li><code>text</code>：用于全文搜索，通常先经过文本分析（其中包括分词）再建立索引。</li>
+</ul>
+<p><strong>Document 是 JSON，不代表 ES 对所有字段都采用同一种搜索方式。</strong> 这句话后面会很重要。</p>
+<h2 id="三、ES-到底是什么软件？启动后长什么样？"><a href="#三、ES-到底是什么软件？启动后长什么样？" class="headerlink" title="三、ES 到底是什么软件？启动后长什么样？"></a>三、ES 到底是什么软件？启动后长什么样？</h2><p>Elasticsearch 是一套主要基于 Java 构建的服务端软件。我们可以把它部署在服务器、虚拟机、容器或云服务上。</p>
+<p><strong>启动一个 Elasticsearch 实例，就得到了一个 Node；若干互相连接的 Node 就组成 Cluster。只有一个 Node 时，也可以构成单节点集群。</strong></p>
+<p>与 HDFS 那种 NameNode、DataNode 分别承担特定职责的架构相比，ES 通常启动的是同一种服务程序，然后由配置决定不同节点扮演什么角色。</p>
+<h3 id="3-1-初学者首先认识这四类职责"><a href="#3-1-初学者首先认识这四类职责" class="headerlink" title="3.1 初学者首先认识这四类职责"></a>3.1 初学者首先认识这四类职责</h3><table>
+<thead>
+<tr>
+<th>角色或职责</th>
+<th>做什么</th>
+<th>可以怎么理解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Master-eligible &#x2F; Elected Master</strong></td>
+<td>有资格参加主节点选举；被选出的 Master 管理集群状态、成员与分片分配</td>
+<td>集群管理员</td>
+</tr>
+<tr>
+<td><strong>Data Node</strong></td>
+<td>保存 Shard，负责实际读写、搜索和聚合</td>
+<td>真正存数据、干搜索的机器</td>
+</tr>
+<tr>
+<td><strong>Ingest Node</strong></td>
+<td>可在写入前运行数据加工流水线</td>
+<td>入库前的加工站</td>
+</tr>
+<tr>
+<td><strong>Coordinating（协调职责）</strong></td>
+<td>接收请求、转发到相关分片、汇总结果</td>
+<td>本次请求的调度员</td>
+</tr>
+</tbody></table>
+<p>这里有两个细节需要纠正初学者最容易产生的误解：</p>
+<p><strong>第一，Master-eligible 不等于 Master。</strong> 多个节点可以具有参选资格，但正常运行时只有一个被选为 Master。它主要管理集群，不负责亲自处理每条搜索请求。</p>
+<p><strong>第二，Coordinating 不是必须独立部署的一种特殊进程。</strong> 任何 ES 节点都可以协调请求；只有当我们专门将 <code>node.roles</code> 配置为空数组时，它才成为只承担协调职责的节点。</p>
+<p>随着集群规模变大，还可以按冷热数据、机器学习等需求细分角色。不过，理解基础搜索原理，先认识上面四类职责就够了。</p>
+<h3 id="3-2-一个三节点集群的示意"><a href="#3-2-一个三节点集群的示意" class="headerlink" title="3.2 一个三节点集群的示意"></a>3.2 一个三节点集群的示意</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">      Java 业务服务 / Kibana</span><br><span class="line">               |</span><br><span class="line">          HTTP 请求</span><br><span class="line">               v</span><br><span class="line">      +----------------+</span><br><span class="line">      | 协调节点（职责）|</span><br><span class="line">      +----------------+</span><br><span class="line">               |</span><br><span class="line">    分发到相关 Shard</span><br><span class="line">      /        |       \</span><br><span class="line">     v         v        v</span><br><span class="line">+---------+ +---------+ +---------+</span><br><span class="line">| Node A  | | Node B  | | Node C  |</span><br><span class="line">| Data    | | Data    | | Data    |</span><br><span class="line">| Shard 0 | | Shard 1 | | Shard 2 |</span><br><span class="line">+---------+ +---------+ +---------+</span><br><span class="line">      \        |        /</span><br><span class="line">       \  局部查询结果 /</span><br><span class="line">        v      v      v</span><br><span class="line">          协调节点</span><br><span class="line">        合并、排序、返回</span><br></pre></td></tr></table></figure></div>
+
+<p>图中为方便说明省略了副本与其他角色。实际的请求协调可以由 Node A、B、C 其中一个节点兼任，不一定需要额外服务器。</p>
+<p><strong>注意：一个集群并不是每台机器都保存全部数据。</strong> 这正是 Shard 要解决的问题。</p>
+<h2 id="四、Index-为什么要拆成-Shard？"><a href="#四、Index-为什么要拆成-Shard？" class="headerlink" title="四、Index 为什么要拆成 Shard？"></a>四、Index 为什么要拆成 Shard？</h2><p>假设 <code>medical_records</code> 这个 Index 有 900 万份病历。</p>
+<p>如果每个节点都存全部数据，那么增加机器只是不断复制完整数据，并不能真正分摊存储负担。</p>
+<p>ES 可以把一个 Index 拆成若干 <strong>Primary Shard（主分片）</strong>：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Index: medical_records（900 万份病历）</span><br><span class="line">           |</span><br><span class="line">      按路由分布</span><br><span class="line">           |</span><br><span class="line">      +----+----+----+</span><br><span class="line">      |         |    |</span><br><span class="line">      v         v    v</span><br><span class="line">   Shard 0   Shard 1   Shard 2</span><br><span class="line">   一部分     一部分     一部分</span><br><span class="line">   文档       文档       文档</span><br><span class="line">      |         |         |</span><br><span class="line">    Node A    Node B    Node C</span><br></pre></td></tr></table></figure></div>
+
+<p>这里的「分成三份」是逻辑示意，不保证每个分片恰好 300 万条。</p>
+<p><strong>一个 Shard 本身就是一个独立的 Lucene Index</strong>，它可以保存文档，也可以自行执行查询。进一步往里看，Lucene 会使用 Segment（段）等结构组织索引数据。后面讲的倒排索引，就存在于这个更底层的搜索结构中。</p>
+<h3 id="4-1-搜索会在每个-Shard-上发生吗？"><a href="#4-1-搜索会在每个-Shard-上发生吗？" class="headerlink" title="4.1 搜索会在每个 Shard 上发生吗？"></a>4.1 搜索会在每个 Shard 上发生吗？</h3><p><strong>通常是：协调节点把搜索请求发给目标索引的相关逻辑分片，各分片分别检索自己的数据，然后再合并结果。</strong></p>
+<p>不过不能理解为「永远搜索全部分片」：按文档 ID 读取、指定 Routing、某些可裁剪的查询等，可能缩小要访问的分片范围。</p>
+<h3 id="4-2-Primary-和-Replica-是什么关系？"><a href="#4-2-Primary-和-Replica-是什么关系？" class="headerlink" title="4.2 Primary 和 Replica 是什么关系？"></a>4.2 Primary 和 Replica 是什么关系？</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Node A：Shard 0 Primary</span><br><span class="line">           |</span><br><span class="line">           | 复制写入操作</span><br><span class="line">           v</span><br><span class="line">Node B：Shard 0 Replica</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>Primary</strong> 是该分片写入操作的主要入口，负责协调副本复制。</li>
+<li><strong>Replica</strong> 保存相同数据的副本，能够提高容错能力，并分担搜索读取。</li>
+<li>对普通搜索，通常从同一逻辑分片的某个可用副本中选择<strong>一份</strong>执行，不需要主、副本重复搜索一遍相同数据。</li>
+</ul>
+<p>分片越多不代表一定越快。分片会带来内存、调度、合并等额外开销，分片数量应该根据数据规模、机器资源与查询特征设计。</p>
+<p>现在的问题是：<strong>即使分片把 900 万份病历拆成三份，一个分片仍可能包含几百万份病历。它怎么在内部找到「胸痛」？</strong></p>
+<p>答案才是全文的主角：倒排索引。</p>
+<h2 id="五、倒排索引到底「倒排」了什么？"><a href="#五、倒排索引到底「倒排」了什么？" class="headerlink" title="五、倒排索引到底「倒排」了什么？"></a>五、倒排索引到底「倒排」了什么？</h2><p>先给一个完全不神秘的定义：</p>
+<blockquote>
+<p><strong>倒排索引（Inverted Index）不是把词反着写，也不是把文件倒序存放，而是把「文档 → 词」的关系预先整理为「词 → 文档列表」。</strong></p>
+</blockquote>
+<p>它最像一本书最后的<strong>关键词索引页</strong>：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">胸痛：第 3、8、21 页</span><br><span class="line">呼吸困难：第 8、21、37 页</span><br></pre></td></tr></table></figure></div>
+
+<p>你要找「胸痛」，不会从书的第一页开始逐字读，而是先翻索引页，直接找到相关位置。</p>
+<p>搜索引擎做的事情类似，只不过它处理的是大量文档，而不是一本书的页码。</p>
+<h3 id="5-1-假设我们只有四份病历"><a href="#5-1-假设我们只有四份病历" class="headerlink" title="5.1 假设我们只有四份病历"></a>5.1 假设我们只有四份病历</h3><p>为了把原理看清楚，暂时不用真实的复杂病历，只看已经整理好的词项：</p>
+<table>
+<thead>
+<tr>
+<th>文档 ID</th>
+<th>病历内容（简化）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>101</strong></td>
+<td>胸痛、呼吸困难</td>
+</tr>
+<tr>
+<td><strong>102</strong></td>
+<td>胸痛、发热</td>
+</tr>
+<tr>
+<td><strong>103</strong></td>
+<td>呼吸困难、咳嗽</td>
+</tr>
+<tr>
+<td><strong>104</strong></td>
+<td>胸痛、呼吸困难、咳嗽</td>
+</tr>
+</tbody></table>
+<p>现在要查询：<strong>同时包含「胸痛」和「呼吸困难」的文档。</strong></p>
+<p>不使用搜索索引时，最直观的方法是挨个查看：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">检查 101 → 命中</span><br><span class="line">检查 102 → 不命中</span><br><span class="line">检查 103 → 不命中</span><br><span class="line">检查 104 → 命中</span><br></pre></td></tr></table></figure></div>
+
+<p>四份文档没有压力，但对于一千万份病历，这种做法就可能非常昂贵。</p>
+<h3 id="5-2-第一步：整理「文档-→-词项」关系"><a href="#5-2-第一步：整理「文档-→-词项」关系" class="headerlink" title="5.2 第一步：整理「文档 → 词项」关系"></a>5.2 第一步：整理「文档 → 词项」关系</h3><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">101 → 胸痛、呼吸困难</span><br><span class="line">102 → 胸痛、发热</span><br><span class="line">103 → 呼吸困难、咳嗽</span><br><span class="line">104 → 胸痛、呼吸困难、咳嗽</span><br></pre></td></tr></table></figure></div>
+
+<p>这是一种很自然的正向关系：<strong>我知道文档 ID，想知道里面有哪些词。</strong></p>
+<h3 id="5-3-第二步：把关系「反过来」"><a href="#5-3-第二步：把关系「反过来」" class="headerlink" title="5.3 第二步：把关系「反过来」"></a>5.3 第二步：把关系「反过来」</h3><p>遍历全部文档，把相同词语聚集起来：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">胸痛      → [101, 102, 104]</span><br><span class="line">呼吸困难  → [101, 103, 104]</span><br><span class="line">发热      → [102]</span><br><span class="line">咳嗽      → [103, 104]</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>这，就是倒排索引最核心的样子。</strong></p>
+<p>为什么叫「倒排」？因为它把原本的查找方向反了过来：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">原来：文档 ID  → 词语</span><br><span class="line">现在：词语     → 文档 ID</span><br></pre></td></tr></table></figure></div>
+
+<p>每个词后面的文档 ID 集合，叫做 <strong>Posting List（倒排列表）</strong>。而所有可检索的词，构成 <strong>Term Dictionary（词典）</strong>。</p>
+<p>可以把它理解成两个步骤：<strong>先在词典中找到词，再拿到这个词对应的文档清单。</strong></p>
+<h3 id="5-4-第三步：AND-查询为什么突然简单了？"><a href="#5-4-第三步：AND-查询为什么突然简单了？" class="headerlink" title="5.4 第三步：AND 查询为什么突然简单了？"></a>5.4 第三步：AND 查询为什么突然简单了？</h3><p>查找「胸痛 AND 呼吸困难」时，只要读取两份列表：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">胸痛      → [101, 102, 104]</span><br><span class="line">呼吸困难  → [101, 103, 104]</span><br><span class="line">                      |</span><br><span class="line">                   求交集</span><br><span class="line">                      v</span><br><span class="line">                  [101, 104]</span><br></pre></td></tr></table></figure></div>
+
+<p>结果是 <strong>101 和 104</strong>。</p>
+<p>如果查询是「胸痛 OR 呼吸困难」，那就改成<strong>求并集</strong>：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">胸痛      → [101, 102, 104]</span><br><span class="line">呼吸困难  → [101, 103, 104]</span><br><span class="line">                      |</span><br><span class="line">                   求并集</span><br><span class="line">                      v</span><br><span class="line">              [101, 102, 103, 104]</span><br></pre></td></tr></table></figure></div>
+
+<p>看到了吗？我们没有重新阅读病历正文，只是在已经整理好的文档 ID 列表之间做集合运算。</p>
+<p>这就是倒排索引让人觉得「像魔法」的地方。</p>
+<h3 id="5-5-一个真正值得理解的小细节：列表通常是有序的"><a href="#5-5-一个真正值得理解的小细节：列表通常是有序的" class="headerlink" title="5.5 一个真正值得理解的小细节：列表通常是有序的"></a>5.5 一个真正值得理解的小细节：列表通常是有序的</h3><p>为什么有序很重要？</p>
+<p>两个排好序的列表，可以利用双指针思路寻找交集。拿上面的例子：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">A：101 → 102 → 104</span><br><span class="line">B：101 → 103 → 104</span><br><span class="line"></span><br><span class="line">101 == 101：记录 101，两边都前进</span><br><span class="line">102 &lt;  103：A 前进</span><br><span class="line">104 &gt;  103：B 前进</span><br><span class="line">104 == 104：记录 104</span><br></pre></td></tr></table></figure></div>
+
+<p>过程结束，找到 <code>[101, 104]</code>。</p>
+<p>这只是直观说明。真实 Lucene 还会使用压缩、跳跃、块级信息等优化，不是只能采用这种最基础的算法。</p>
+<h3 id="5-6-「倒排」并不等于「所有查询复杂度都变成-O-1-」"><a href="#5-6-「倒排」并不等于「所有查询复杂度都变成-O-1-」" class="headerlink" title="5.6 「倒排」并不等于「所有查询复杂度都变成 O(1)」"></a>5.6 「倒排」并不等于「所有查询复杂度都变成 O(1)」</h3><p>这里必须打破另一个误会。</p>
+<p>假设有一千万份病历，其中 999 万份都含有「患者」这个词：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">患者 → [1, 2, 3, 4, ... 9,990,000]</span><br></pre></td></tr></table></figure></div>
+
+<p>这个词对应的倒排列表仍然很长。它可能几乎过滤不掉任何文档。</p>
+<p>所以倒排索引为什么快，关键不在于名字里有「倒」字，而在于：</p>
+<ol>
+<li><strong>提前付出建索引成本</strong>，不必查询时从头分析所有文本。</li>
+<li><strong>根据词项迅速定位候选文档</strong>，过滤掉大量不相关数据。</li>
+<li><strong>利用有序、压缩的倒排列表进行高效运算</strong>。</li>
+<li><strong>结合评分、缓存、跳跃和其他优化</strong>，减少无用工作。</li>
+</ol>
+<p>搜索非常常见的词、做复杂通配符匹配、返回海量结果或深度分页时，仍然可能很慢。</p>
+<p>倒排索引不是凭空消灭计算成本，而是把部分计算和存储成本<strong>从查询阶段提前到了写入阶段</strong>。</p>
+<h2 id="六、分词是倒排索引的前提：中文尤其容易踩坑"><a href="#六、分词是倒排索引的前提：中文尤其容易踩坑" class="headerlink" title="六、分词是倒排索引的前提：中文尤其容易踩坑"></a>六、分词是倒排索引的前提：中文尤其容易踩坑</h2><p>前面的演示，默认计算机已经知道「胸痛」「呼吸困难」是两个词。</p>
+<p>但计算机收到的原始文本其实是：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">患者反复胸痛，伴有呼吸困难</span><br></pre></td></tr></table></figure></div>
+
+<p>它怎么知道该拆成哪些词？这就需要 <strong>Analyzer（分析器）</strong>。</p>
+<p>通常可以把文本分析粗略理解为：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">原始文本</span><br><span class="line">   |</span><br><span class="line">字符预处理（例如清理某些格式）</span><br><span class="line">   |</span><br><span class="line">Tokenizer：切分词项</span><br><span class="line">   |</span><br><span class="line">Token Filter：大小写归一化、停用词等处理</span><br><span class="line">   |</span><br><span class="line">得到可以建立索引的 Term</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>注意：中文词边界不像英文那样普遍有空格。</strong> ES 的默认 <code>standard</code> 分词器未必符合医疗场景希望得到的中文医学词汇边界。</p>
+<p>例如「心肌梗死」「呼吸困难」「糖化血红蛋白」是否被正确识别，就会影响搜索召回率和准确率。真实系统需要测试并选择适合中文和专业术语的分析方案，必要时引入医学词典、同义词体系或定制分析器。</p>
+<p>另外，<strong>写入时怎么分词，查询时也要采取兼容的分析方式</strong>。否则我们建好了一份词项词典，查询却用另一套无法对应的词项，自然查不出来。</p>
+<h3 id="6-1-text-与-keyword-的区别"><a href="#6-1-text-与-keyword-的区别" class="headerlink" title="6.1 text 与 keyword 的区别"></a>6.1 text 与 keyword 的区别</h3><p>假设同样的文字是 <code>胸痛 呼吸困难</code>：</p>
+<ul>
+<li><code>text</code> 字段可以经过分词，形成「胸痛」「呼吸困难」这样的词项，适合全文搜索。</li>
+<li><code>keyword</code> 通常把整个值当作一个词项，适合患者 ID、编码、状态、标签等精确匹配。</li>
+</ul>
+<p>因此：<strong>不是 ES 中任何一个字符串字段都应该分词。</strong> 把患者 ID 错误地当成全文文本处理，和把一整份病历当作一个不可拆分的关键词，都会让检索设计变得别扭。</p>
+<h2 id="七、倒排索引还会保存什么？为什么能按相关性排序？"><a href="#七、倒排索引还会保存什么？为什么能按相关性排序？" class="headerlink" title="七、倒排索引还会保存什么？为什么能按相关性排序？"></a>七、倒排索引还会保存什么？为什么能按相关性排序？</h2><p>我们手工制作的索引，只保存了「词 → 文档 ID」。真实 Lucene 可以保存更多信息，例如：</p>
+<ul>
+<li><strong>词频（Term Frequency）</strong>：一个词在某份文档里出现了几次。</li>
+<li><strong>词项位置（Position）</strong>：词出现在文档的哪个位置，可以帮助短语或邻近搜索。</li>
+<li><strong>词项偏移（Offset）</strong>：词在原文里的起止位置，可以辅助文本高亮等功能。</li>
+<li><strong>文档统计信息</strong>：帮助评估某个词是常见词还是稀有词。</li>
+</ul>
+<p>这些信息并不保证每个字段都全部保存，具体取决于 Mapping 与索引选项。</p>
+<p>例如用户搜索「胸痛」，两份文档都命中了，但其中一份只有一句话随便提及，另一份详细描述了多次胸痛事件。ES 可以使用 <strong>BM25</strong> 等相关性评分机制，考虑词频、词的稀有程度、字段长度等因素，给文档计算分数。</p>
+<p>所以 ES 不仅回答「匹配没匹配」，还可以回答「<strong>哪些结果更值得排在前面</strong>」。</p>
+<p>但是，相关性分数并不等于医学诊断价值。文本检索的高分只是搜索算法意义上的更相关。</p>
+<h2 id="八、一次写入请求，ES-内部经历了什么？"><a href="#八、一次写入请求，ES-内部经历了什么？" class="headerlink" title="八、一次写入请求，ES 内部经历了什么？"></a>八、一次写入请求，ES 内部经历了什么？</h2><p>现在把刚才认识的 Node、Index、Shard、倒排索引连接起来。</p>
+<p>假设 Java 服务提交一份病历：</p>
+<div class="code-container" data-rel="Json"><figure class="iseeu highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;record_id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;R101&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;patient_id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;P001&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="string">&quot;胸痛 呼吸困难&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>大致过程如下：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Java 服务提交 JSON</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">某个 ES Node 接收请求</span><br><span class="line">       |</span><br><span class="line">       | （如配置了 Ingest Pipeline，可先执行加工）</span><br><span class="line">       v</span><br><span class="line">确定目标 Index 和 Primary Shard</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">主分片接收写入，Lucene 处理字段并建立索引</span><br><span class="line">       |</span><br><span class="line">       +----&gt; 同步相关副本写入操作</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">返回写入结果</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">经过 Refresh 后，普通搜索可以看见新文档</span><br></pre></td></tr></table></figure></div>
+
+<p>这个流程有两个重要细节：</p>
+<p><strong>第一，写入不是向每一个主分片广播同一份文档。</strong> ES 根据路由规则，把文档归属到某个主分片，再由主分片协调其副本复制。</p>
+<p><strong>第二，写入成功与「立刻能被搜索」不是完全相同的事情。</strong></p>
+<p>ES 是<strong>近实时（Near Real-Time）搜索引擎</strong>。新写入的文档需要经过 Refresh，相关的索引段对搜索可见后，普通搜索才能看到它。Refresh 与持久化提交也不是同一个概念。</p>
+<p>如果业务场景需要「刚写完就查询到」，可以了解写入 API 的 <code>refresh=wait_for</code> 参数；它等待相关数据变为可搜索，而不是每次强行立刻刷新。</p>
+<h2 id="九、一次搜索请求又经历了什么？"><a href="#九、一次搜索请求又经历了什么？" class="headerlink" title="九、一次搜索请求又经历了什么？"></a>九、一次搜索请求又经历了什么？</h2><p>假设查询：<code>胸痛 AND 呼吸困难</code>。</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Java 服务发起 _search</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">协调节点解析请求，确定目标 Index / Shard</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">请求分发到各相关逻辑分片的一份可用副本</span><br><span class="line">       |</span><br><span class="line">       +--&gt; Shard 0：分析查询词、查倒排列表、求交集、评分</span><br><span class="line">       |</span><br><span class="line">       +--&gt; Shard 1：分析查询词、查倒排列表、求交集、评分</span><br><span class="line">       |</span><br><span class="line">       +--&gt; Shard 2：分析查询词、查倒排列表、求交集、评分</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">协调节点汇总各分片候选结果，形成全局排序</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">取得需要返回的文档内容（fetch）</span><br><span class="line">       |</span><br><span class="line">       v</span><br><span class="line">返回 JSON 搜索结果</span><br></pre></td></tr></table></figure></div>
+
+<p>这是一种便于理解的简化描述。ES 的搜索通常涉及查询与获取结果等阶段，实际执行还会受到查询类型、路由、缓存和优化策略等影响。</p>
+<p>最重要的是区分两种不同层次的加速：</p>
+<ul>
+<li><strong>Shard</strong>：把数据分散到不同节点，解决存储规模和并行执行问题。</li>
+<li><strong>倒排索引</strong>：让单个 Shard 内部不必为了找一个关键词而逐篇扫描全文。</li>
+</ul>
+<p>只有弄清这两层，才算真正把 ES 的「分布式」和「搜索」连接起来。</p>
+<h2 id="十、动手试一遍：不用写-Java，也能理解-ES-怎么用"><a href="#十、动手试一遍：不用写-Java，也能理解-ES-怎么用" class="headerlink" title="十、动手试一遍：不用写 Java，也能理解 ES 怎么用"></a>十、动手试一遍：不用写 Java，也能理解 ES 怎么用</h2><p>下面这组请求使用 <strong>Kibana → Dev Tools → Console</strong> 的语法。只要你已经有一套可访问的 Elasticsearch 环境，就可以逐条执行。</p>
+<p>没有环境的话，可以先参考官方的本地部署教程。为避免不同 ES 版本、认证方式和 Docker 参数混用，本文不硬编码一套可能过时的安装命令。</p>
+<blockquote>
+<p><strong>教学约定</strong>：我们把中文词语手工用空格隔开，再使用 ES 内置 <code>whitespace</code> 分词器。这样不用额外安装中文分词插件，就可以稳定复现本文的倒排索引示例。<strong>这只适合教学，不是中文真实病历的推荐配置。</strong></p>
+</blockquote>
+<h3 id="10-1-创建一个-Index"><a href="#10-1-创建一个-Index" class="headerlink" title="10.1 创建一个 Index"></a>10.1 创建一个 Index</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">PUT /medical_records_demo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;settings&quot;: &#123;</span><br><span class="line">    &quot;number_of_shards&quot;: 1,</span><br><span class="line">    &quot;number_of_replicas&quot;: 0</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;mappings&quot;: &#123;</span><br><span class="line">    &quot;properties&quot;: &#123;</span><br><span class="line">      &quot;patient_id&quot;: &#123; &quot;type&quot;: &quot;keyword&quot; &#125;,</span><br><span class="line">      &quot;content&quot;: &#123;</span><br><span class="line">        &quot;type&quot;: &quot;text&quot;,</span><br><span class="line">        &quot;analyzer&quot;: &quot;whitespace&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这里的意思是：</p>
+<ul>
+<li>创建一个叫 <code>medical_records_demo</code> 的文档集合。</li>
+<li>只配置 <strong>1 个主分片、0 个副本</strong>，方便在本地单节点学习；<strong>生产环境不要直接照搬无副本配置</strong>。</li>
+<li><code>patient_id</code> 使用精确匹配的 <code>keyword</code>。</li>
+<li><code>content</code> 使用全文搜索的 <code>text</code>，并以空格切词。</li>
+</ul>
+<h3 id="10-2-插入四份文档"><a href="#10-2-插入四份文档" class="headerlink" title="10.2 插入四份文档"></a>10.2 插入四份文档</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PUT /medical_records_demo/_doc/101?refresh=wait_for</span><br><span class="line">&#123;</span><br><span class="line">  &quot;patient_id&quot;: &quot;P001&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;胸痛 呼吸困难&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PUT /medical_records_demo/_doc/102?refresh=wait_for</span><br><span class="line">&#123;</span><br><span class="line">  &quot;patient_id&quot;: &quot;P002&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;胸痛 发热&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PUT /medical_records_demo/_doc/103?refresh=wait_for</span><br><span class="line">&#123;</span><br><span class="line">  &quot;patient_id&quot;: &quot;P003&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;呼吸困难 咳嗽&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PUT /medical_records_demo/_doc/104?refresh=wait_for</span><br><span class="line">&#123;</span><br><span class="line">  &quot;patient_id&quot;: &quot;P004&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;胸痛 呼吸困难 咳嗽&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这里的 <code>_doc/101</code> 指定了文档 <code>_id</code> 为 <code>101</code>；<code>refresh=wait_for</code> 保证请求返回前相关写入已可被普通搜索看到，便于我们立即验证。</p>
+<h3 id="10-3-验证分词结果"><a href="#10-3-验证分词结果" class="headerlink" title="10.3 验证分词结果"></a>10.3 验证分词结果</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /medical_records_demo/_analyze</span><br><span class="line">&#123;</span><br><span class="line">  &quot;field&quot;: &quot;content&quot;,</span><br><span class="line">  &quot;text&quot;: &quot;胸痛 呼吸困难&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>你应该能在 <code>tokens</code> 中看到「胸痛」和「呼吸困难」两个词项。</p>
+<h3 id="10-4-搜索「胸痛-AND-呼吸困难」"><a href="#10-4-搜索「胸痛-AND-呼吸困难」" class="headerlink" title="10.4 搜索「胸痛 AND 呼吸困难」"></a>10.4 搜索「胸痛 AND 呼吸困难」</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">GET /medical_records_demo/_search</span><br><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;match&quot;: &#123;</span><br><span class="line">      &quot;content&quot;: &#123;</span><br><span class="line">        &quot;query&quot;: &quot;胸痛 呼吸困难&quot;,</span><br><span class="line">        &quot;operator&quot;: &quot;and&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这里指定 <code>operator: &quot;and&quot;</code> 很重要：<strong><code>match</code> 查询在分析后，默认的词项组合行为通常是 OR</strong>，如果不明确指定，很可能查出不符合本例预期的结果。</p>
+<p>预期命中的文档 <code>_id</code> 是 <strong><code>101</code> 和 <code>104</code></strong>。结果里还会出现 <code>_score</code> 等字段，这是相关性评分的一部分。</p>
+<h3 id="10-5-改成-OR，再看看有什么不同"><a href="#10-5-改成-OR，再看看有什么不同" class="headerlink" title="10.5 改成 OR，再看看有什么不同"></a>10.5 改成 OR，再看看有什么不同</h3><p>把上面的 <code>&quot;and&quot;</code> 改成 <code>&quot;or&quot;</code>：</p>
+<div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">GET /medical_records_demo/_search</span><br><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;match&quot;: &#123;</span><br><span class="line">      &quot;content&quot;: &#123;</span><br><span class="line">        &quot;query&quot;: &quot;胸痛 呼吸困难&quot;,</span><br><span class="line">        &quot;operator&quot;: &quot;or&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>此时四份文档都会命中，只是排序、评分可能不同。</p>
+<p>这就是你刚才手工求交集、求并集的原理在真实搜索 API 中的一次验证。</p>
+<h3 id="10-6-精确查询患者-ID"><a href="#10-6-精确查询患者-ID" class="headerlink" title="10.6 精确查询患者 ID"></a>10.6 精确查询患者 ID</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET /medical_records_demo/_search</span><br><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;term&quot;: &#123;</span><br><span class="line">      &quot;patient_id&quot;: &quot;P001&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这里使用 <code>term</code> 精确匹配 <code>keyword</code> 字段，而不是对患者 ID 做全文分词。</p>
+<h3 id="10-7-看看索引和分片"><a href="#10-7-看看索引和分片" class="headerlink" title="10.7 看看索引和分片"></a>10.7 看看索引和分片</h3><div class="code-container" data-rel="Http"><figure class="iseeu highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /_cat/indices/medical_records_demo?v</span><br><span class="line">GET /_cat/shards/medical_records_demo?v</span><br></pre></td></tr></table></figure></div>
+
+<p>前一个命令能看到 Index 的一些基本状态，后一个可以看到分片信息。未来如果你把数据部署到多节点集群，这两条命令会更加直观。</p>
+<blockquote>
+<p>这些 API 都需要相应的访问权限；具体认证方式以你使用的本地或云部署环境为准。教学结束后可以使用 <code>DELETE /medical_records_demo</code> 删除测试索引，但不要在生产环境随意执行删除命令。</p>
+</blockquote>
+<h2 id="十一、ES、MySQL、Doris-到底怎么分工？"><a href="#十一、ES、MySQL、Doris-到底怎么分工？" class="headerlink" title="十一、ES、MySQL、Doris 到底怎么分工？"></a>十一、ES、MySQL、Doris 到底怎么分工？</h2><p>学到这里，很容易产生一个新问题：既然 ES 搜索这么快，是不是以后直接用 ES 存全部业务数据？</p>
+<p>答案通常是：<strong>不要因为一种技术擅长某种查询，就要求它承担所有职责。</strong></p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>通常优先考虑</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户、订单、患者主数据的事务写入与强业务约束</td>
+<td>MySQL、PostgreSQL 等事务型数据库</td>
+</tr>
+<tr>
+<td>大规模病历正文检索、关键词匹配、搜索相关性排序</td>
+<td>Elasticsearch</td>
+</tr>
+<tr>
+<td>大量结构化事实的分组统计、复杂分析 SQL、宽范围聚合</td>
+<td>Doris、ClickHouse 等 OLAP 引擎</td>
+</tr>
+<tr>
+<td>日志的集中搜索、排障、事件分析</td>
+<td>Elasticsearch 及周边采集、可视化工具</td>
+</tr>
+<tr>
+<td>语义相似检索、向量检索</td>
+<td>ES 也可参与，但需要评估模型、召回效果与成本</td>
+</tr>
+</tbody></table>
+<p>比如医疗科研平台可以做这样的职责划分：</p>
+<div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">医院原始数据</span><br><span class="line">      |</span><br><span class="line">      v</span><br><span class="line">清洗、归一化、患者与就诊关系校验</span><br><span class="line">      |</span><br><span class="line">      +------&gt; MySQL：业务数据与处理状态</span><br><span class="line">      |</span><br><span class="line">      +------&gt; Doris：结构化医疗事实分析</span><br><span class="line">      |</span><br><span class="line">      +------&gt; ES：病历正文与文书全文检索</span><br><span class="line">                          |</span><br><span class="line">                    搜索结果返回患者 ID、文书 ID</span><br><span class="line">                          |</span><br><span class="line">                    业务层按查询语义进行关联</span><br></pre></td></tr></table></figure></div>
+
+<p>如果查询是「患者年龄大于 50 岁，并且某项检验指标超过阈值」，结构化数据库或分析引擎就可能更合适。</p>
+<p>如果查询是「病程记录提到持续胸痛、呼吸困难」，ES 的全文搜索能力则值得优先考虑。</p>
+<p>如果要求两个条件属于<strong>同一次就诊</strong>，业务层就必须明确患者 ID、就诊 ID、文书 ID 之间的关系。<strong>ES 的倒排索引能找到文本，不会替我们判断临床语义。</strong></p>
+<p>同样要考虑：数据同步延迟、索引重建、权限控制、脱敏审计，以及 ES 与主业务库的一致性边界。</p>
+<h2 id="十二、几个常见误区，一次说明白"><a href="#十二、几个常见误区，一次说明白" class="headerlink" title="十二、几个常见误区，一次说明白"></a>十二、几个常见误区，一次说明白</h2><p><strong>误区一：「ES 的 Index 就是 MySQL Index。」</strong></p>
+<p>不是。ES Index 是可搜索的文档集合；MySQL Index 通常是依附于表的辅助数据结构。两个体系的 Index 处于不同抽象层次。</p>
+<p><strong>误区二：「Shard 就是一段切碎的 JSON 文件。」</strong></p>
+<p>不是。Shard 是具备独立索引与搜索能力的 Lucene 索引，内部还有 Segment 等结构。</p>
+<p><strong>误区三：「倒排索引是把文字倒着排列，所以搜索快。」</strong></p>
+<p>不是。它改变的是<strong>查找关系的方向</strong>：从「文档有哪些词」变成「词出现在哪些文档」。</p>
+<p><strong>误区四：「ES 每次搜索都要交给 Master。」</strong></p>
+<p>不是。协调节点负责请求分发与结果合并，数据节点在分片上真正执行搜索；Master 主要负责集群管理。</p>
+<p><strong>误区五：「主分片和副本会把同一份数据各搜一次。」</strong></p>
+<p>一般不会。一次普通搜索通常为每个相关逻辑分片选择一份可用分片副本进行查询。</p>
+<p><strong>误区六：「倒排索引让任何搜索都是瞬间完成。」</strong></p>
+<p>也不是。高频词、复杂匹配、海量命中、深度分页及资源不足等情况都会影响性能。</p>
+<p><strong>误区七：「写入成功，新文档就一定立刻可被普通搜索查到。」</strong></p>
+<p>不一定。ES 有 Refresh 机制，是近实时搜索系统。</p>
+<p><strong>误区八：「ES 的全文搜索自动理解同义词和医学概念。」</strong></p>
+<p>不是。分词、同义词、医学术语归一化、语义向量检索都需要明确设计和验证。</p>
+<h2 id="十三、最后用一张结构图把所有概念串起来"><a href="#十三、最后用一张结构图把所有概念串起来" class="headerlink" title="十三、最后用一张结构图把所有概念串起来"></a>十三、最后用一张结构图把所有概念串起来</h2><div class="code-container" data-rel="Text"><figure class="iseeu highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">                 Elasticsearch Cluster</span><br><span class="line">                           |</span><br><span class="line">       +-------------------+-------------------+</span><br><span class="line">       |                   |                   |</span><br><span class="line">    Node A              Node B              Node C</span><br><span class="line">（运行的 ES 实例）  （运行的 ES 实例）  （运行的 ES 实例）</span><br><span class="line">       |                   |                   |</span><br><span class="line">    Shard 0             Shard 1             Shard 2</span><br><span class="line">（Lucene 索引）     （Lucene 索引）     （Lucene 索引）</span><br><span class="line">       |                   |                   |</span><br><span class="line">    Segment             Segment             Segment</span><br><span class="line">       |                   |                   |</span><br><span class="line">   倒排索引              倒排索引              倒排索引</span><br><span class="line">  词 → 文档 ID          词 → 文档 ID          词 → 文档 ID</span><br><span class="line">       \                   |                   /</span><br><span class="line">        \---------- 搜索结果合并 ------------/</span><br><span class="line">                           |</span><br><span class="line">                      返回给客户端</span><br></pre></td></tr></table></figure></div>
+
+<p>图中隐藏了副本、多个 Segment、其他索引结构及可能的多角色节点，只保留最重要的主线。</p>
+<p>回顾整篇文章，其实只需要抓住四句话：</p>
+<ol>
+<li><strong>Elasticsearch 是一套真正运行在服务器上的分布式搜索软件，底层使用 Lucene。</strong></li>
+<li><strong>Index 是可搜索的文档集合，Shard 是组成这个集合的独立搜索单元。</strong></li>
+<li><strong>一个搜索请求可以分发到多个 Shard 并行执行，然后由协调节点合并结果。</strong></li>
+<li><strong>倒排索引把「文档 → 词」预先变成「词 → 文档列表」，于是搜索时可以直接查候选文档，而不必逐篇扫描全部正文。</strong></li>
+</ol>
+<p>最后这条最值得记住：</p>
+<blockquote>
+<p><strong>倒排索引没有魔法。它只是提前建立了一本高效的「关键词目录」，把大量原本需要查询时完成的工作，搬到了写入和建索引的阶段。</strong></p>
+</blockquote>
+<p>理解了这点，再去学习 BM25、Segment、Refresh、分布式查询与向量搜索，就不会觉得它们是一堆彼此无关的术语了。</p>
+<hr>
+<h3 id="附：官方资料与继续阅读"><a href="#附：官方资料与继续阅读" class="headerlink" title="附：官方资料与继续阅读"></a>附：官方资料与继续阅读</h3><p>以下链接可用于核对本文的概念及继续深入学习。技术细节会随着 ES 版本演进，生产实践请优先以对应版本文档为准。</p>
+<ul>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/elasticsearch/reference/current/" >Elasticsearch 官方介绍与参考文档<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/manage-data/data-store/index-basics" >Index、Document、Mapping 与 Shard<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/deploy-manage/distributed-architecture/clusters-nodes-shards/node-roles" >Node Roles：节点角色与协调职责<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/deploy-manage/distributed-architecture/clusters-nodes-shards" >集群、节点与分片<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/deploy-manage/distributed-architecture/reading-and-writing-documents" >分片上的文档读写与复制<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/text" >Text 字段和分词<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/reference/text-analysis/analyzer-reference" >Analyzer 参考<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/elasticsearch/reference/current/full-text-filter-tutorial.html" >全文搜索与 Match 查询<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/reference/elasticsearch/rest-apis/refresh-parameter" >Refresh 与写后可搜索性<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+<li><a class="link"   target="_blank" rel="noopener" href="https://www.elastic.co/docs/solutions/search/get-started/index-basics" >ES API 动手入门<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></li>
+</ul>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> Elasticsearch 入门扫盲：ES 到底是什么、怎样工作，以及「倒排索引」为什么快？</li>
+        <li><strong>作者:</strong> wxh</li>
+        <li><strong>创建于
+                :</strong> 2026-11-02 00:00:00</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-11-05 10:07:35
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://blog.private-cloud.site/2026/11/02/Elasticsearch扫盲/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Elasticsearch/">#Elasticsearch</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/">#搜索引擎</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/">#倒排索引</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Lucene/">#Lucene</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/">#大数据</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/11/01/OLAP%E5%9C%BA%E6%99%AF%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%B8%8E%E4%BA%A7%E5%93%81/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">从数据采集到 OLAP 分析：看懂大数据软件如何部署、运行与协作</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.js';
+
+      (function() {
+        const startPath = location.pathname;
+        const startTime = Date.now();
+        const retryDelay = 200;
+        const retryLimit = 5000;
+
+        const runWaline = () => {
+          if (location.pathname !== startPath) {
+            return;
+          }
+
+          const container = document.getElementById('waline');
+          if (!container) {
+            if (Date.now() - startTime < retryLimit) {
+              setTimeout(runWaline, retryDelay);
+            }
+            return;
+          }
+
+          if (window.redefineWalineInstance?.destroy) {
+            window.redefineWalineInstance.destroy();
+          }
+
+          container.innerHTML = '';
+          window.redefineWalineInstance = init({
+            el: '#waline',
+            serverURL: 'https://waline.private-cloud.site',
+            path: location.pathname,
+            dark: 'body[class~="dark-mode"]',
+            reaction: true,
+            requiredMeta: ['nick', 'mail'],
+            emoji: ['https://cdn.jsdelivr.net/npm/@waline/emojis@1.2.1/weibo'],
+                      lang: 'zh-CN',
+          });
+        };
+
+        runWaline();
+      })();
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">Elasticsearch 入门扫盲：ES 到底是什么、怎样工作，以及「倒排索引」为什么快？</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Elasticsearch%EF%BC%9F%E5%85%88%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%90%9C%E7%B4%A2%E6%A1%86%E8%AF%B4%E8%B5%B7"><span class="nav-text">一、为什么需要 Elasticsearch？先从一个搜索框说起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E6%8A%8A%E5%87%A0%E4%B8%AA%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%90%8D%E5%AD%97%E8%AE%A4%E6%B8%85%E6%A5%9A"><span class="nav-text">二、先把几个容易混淆的名字认清楚</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E4%B8%BA%E4%BB%80%E4%B9%88-Index-%E4%BC%9A%E8%A2%AB%E7%B1%BB%E6%AF%94%E6%88%90-Table%EF%BC%9F"><span class="nav-text">2.1 为什么 Index 会被类比成 Table？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Document-%E6%98%AF%E4%B8%8D%E6%98%AF%E5%8F%AA%E8%83%BD%E5%AD%98%E5%A4%A7%E6%AE%B5%E6%96%87%E5%AD%97%EF%BC%9F"><span class="nav-text">2.2 Document 是不是只能存大段文字？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81ES-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%E8%BD%AF%E4%BB%B6%EF%BC%9F%E5%90%AF%E5%8A%A8%E5%90%8E%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7%EF%BC%9F"><span class="nav-text">三、ES 到底是什么软件？启动后长什么样？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%88%9D%E5%AD%A6%E8%80%85%E9%A6%96%E5%85%88%E8%AE%A4%E8%AF%86%E8%BF%99%E5%9B%9B%E7%B1%BB%E8%81%8C%E8%B4%A3"><span class="nav-text">3.1 初学者首先认识这四类职责</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E4%B8%80%E4%B8%AA%E4%B8%89%E8%8A%82%E7%82%B9%E9%9B%86%E7%BE%A4%E7%9A%84%E7%A4%BA%E6%84%8F"><span class="nav-text">3.2 一个三节点集群的示意</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Index-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8B%86%E6%88%90-Shard%EF%BC%9F"><span class="nav-text">四、Index 为什么要拆成 Shard？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E6%90%9C%E7%B4%A2%E4%BC%9A%E5%9C%A8%E6%AF%8F%E4%B8%AA-Shard-%E4%B8%8A%E5%8F%91%E7%94%9F%E5%90%97%EF%BC%9F"><span class="nav-text">4.1 搜索会在每个 Shard 上发生吗？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-Primary-%E5%92%8C-Replica-%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB%EF%BC%9F"><span class="nav-text">4.2 Primary 和 Replica 是什么关系？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E5%88%B0%E5%BA%95%E3%80%8C%E5%80%92%E6%8E%92%E3%80%8D%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">五、倒排索引到底「倒排」了什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-%E5%81%87%E8%AE%BE%E6%88%91%E4%BB%AC%E5%8F%AA%E6%9C%89%E5%9B%9B%E4%BB%BD%E7%97%85%E5%8E%86"><span class="nav-text">5.1 假设我们只有四份病历</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E6%95%B4%E7%90%86%E3%80%8C%E6%96%87%E6%A1%A3-%E2%86%92-%E8%AF%8D%E9%A1%B9%E3%80%8D%E5%85%B3%E7%B3%BB"><span class="nav-text">5.2 第一步：整理「文档 → 词项」关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E6%8A%8A%E5%85%B3%E7%B3%BB%E3%80%8C%E5%8F%8D%E8%BF%87%E6%9D%A5%E3%80%8D"><span class="nav-text">5.3 第二步：把关系「反过来」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9AAND-%E6%9F%A5%E8%AF%A2%E4%B8%BA%E4%BB%80%E4%B9%88%E7%AA%81%E7%84%B6%E7%AE%80%E5%8D%95%E4%BA%86%EF%BC%9F"><span class="nav-text">5.4 第三步：AND 查询为什么突然简单了？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-5-%E4%B8%80%E4%B8%AA%E7%9C%9F%E6%AD%A3%E5%80%BC%E5%BE%97%E7%90%86%E8%A7%A3%E7%9A%84%E5%B0%8F%E7%BB%86%E8%8A%82%EF%BC%9A%E5%88%97%E8%A1%A8%E9%80%9A%E5%B8%B8%E6%98%AF%E6%9C%89%E5%BA%8F%E7%9A%84"><span class="nav-text">5.5 一个真正值得理解的小细节：列表通常是有序的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-6-%E3%80%8C%E5%80%92%E6%8E%92%E3%80%8D%E5%B9%B6%E4%B8%8D%E7%AD%89%E4%BA%8E%E3%80%8C%E6%89%80%E6%9C%89%E6%9F%A5%E8%AF%A2%E5%A4%8D%E6%9D%82%E5%BA%A6%E9%83%BD%E5%8F%98%E6%88%90-O-1-%E3%80%8D"><span class="nav-text">5.6 「倒排」并不等于「所有查询复杂度都变成 O(1)」</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E5%88%86%E8%AF%8D%E6%98%AF%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E7%9A%84%E5%89%8D%E6%8F%90%EF%BC%9A%E4%B8%AD%E6%96%87%E5%B0%A4%E5%85%B6%E5%AE%B9%E6%98%93%E8%B8%A9%E5%9D%91"><span class="nav-text">六、分词是倒排索引的前提：中文尤其容易踩坑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-1-text-%E4%B8%8E-keyword-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-text">6.1 text 与 keyword 的区别</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%BF%98%E4%BC%9A%E4%BF%9D%E5%AD%98%E4%BB%80%E4%B9%88%EF%BC%9F%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E6%8C%89%E7%9B%B8%E5%85%B3%E6%80%A7%E6%8E%92%E5%BA%8F%EF%BC%9F"><span class="nav-text">七、倒排索引还会保存什么？为什么能按相关性排序？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AB%E3%80%81%E4%B8%80%E6%AC%A1%E5%86%99%E5%85%A5%E8%AF%B7%E6%B1%82%EF%BC%8CES-%E5%86%85%E9%83%A8%E7%BB%8F%E5%8E%86%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">八、一次写入请求，ES 内部经历了什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%9D%E3%80%81%E4%B8%80%E6%AC%A1%E6%90%9C%E7%B4%A2%E8%AF%B7%E6%B1%82%E5%8F%88%E7%BB%8F%E5%8E%86%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">九、一次搜索请求又经历了什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E3%80%81%E5%8A%A8%E6%89%8B%E8%AF%95%E4%B8%80%E9%81%8D%EF%BC%9A%E4%B8%8D%E7%94%A8%E5%86%99-Java%EF%BC%8C%E4%B9%9F%E8%83%BD%E7%90%86%E8%A7%A3-ES-%E6%80%8E%E4%B9%88%E7%94%A8"><span class="nav-text">十、动手试一遍：不用写 Java，也能理解 ES 怎么用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#10-1-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA-Index"><span class="nav-text">10.1 创建一个 Index</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-2-%E6%8F%92%E5%85%A5%E5%9B%9B%E4%BB%BD%E6%96%87%E6%A1%A3"><span class="nav-text">10.2 插入四份文档</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-3-%E9%AA%8C%E8%AF%81%E5%88%86%E8%AF%8D%E7%BB%93%E6%9E%9C"><span class="nav-text">10.3 验证分词结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-4-%E6%90%9C%E7%B4%A2%E3%80%8C%E8%83%B8%E7%97%9B-AND-%E5%91%BC%E5%90%B8%E5%9B%B0%E9%9A%BE%E3%80%8D"><span class="nav-text">10.4 搜索「胸痛 AND 呼吸困难」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-5-%E6%94%B9%E6%88%90-OR%EF%BC%8C%E5%86%8D%E7%9C%8B%E7%9C%8B%E6%9C%89%E4%BB%80%E4%B9%88%E4%B8%8D%E5%90%8C"><span class="nav-text">10.5 改成 OR，再看看有什么不同</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-6-%E7%B2%BE%E7%A1%AE%E6%9F%A5%E8%AF%A2%E6%82%A3%E8%80%85-ID"><span class="nav-text">10.6 精确查询患者 ID</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-7-%E7%9C%8B%E7%9C%8B%E7%B4%A2%E5%BC%95%E5%92%8C%E5%88%86%E7%89%87"><span class="nav-text">10.7 看看索引和分片</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%80%E3%80%81ES%E3%80%81MySQL%E3%80%81Doris-%E5%88%B0%E5%BA%95%E6%80%8E%E4%B9%88%E5%88%86%E5%B7%A5%EF%BC%9F"><span class="nav-text">十一、ES、MySQL、Doris 到底怎么分工？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%87%A0%E4%B8%AA%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA%EF%BC%8C%E4%B8%80%E6%AC%A1%E8%AF%B4%E6%98%8E%E7%99%BD"><span class="nav-text">十二、几个常见误区，一次说明白</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%9C%80%E5%90%8E%E7%94%A8%E4%B8%80%E5%BC%A0%E7%BB%93%E6%9E%84%E5%9B%BE%E6%8A%8A%E6%89%80%E6%9C%89%E6%A6%82%E5%BF%B5%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="nav-text">十三、最后用一张结构图把所有概念串起来</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%84%EF%BC%9A%E5%AE%98%E6%96%B9%E8%B5%84%E6%96%99%E4%B8%8E%E7%BB%A7%E7%BB%AD%E9%98%85%E8%AF%BB"><span class="nav-text">附：官方资料与继续阅读</span></a></li></ol></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+            <div class="customize-info my-1">无限思考 · 无限进步 · 无限创造</div>
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2025</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">wxh</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 23 篇文章
+                    </span>
+                    
+                        <span>
+                            共 61.7k 字
+                        </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.9.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container" role="dialog" aria-modal="true" aria-label="图片查看器">
+	<button class="image-viewer-close" type="button" aria-label="关闭">
+		<i class="fa-solid fa-xmark"></i>
+	</button>
+	<button class="image-viewer-prev" type="button" aria-label="上一页">
+		<i class="fa-solid fa-chevron-left"></i>
+	</button>
+	<div class="image-viewer-frame">
+		<img src="" alt="">
+	</div>
+	<div class="image-viewer-exif-panel hidden absolute left-1/2 bottom-20 -translate-x-1/2 w-[min(92vw,420px)] max-h-[60vh] overflow-hidden rounded-2xl bg-background-color-transparent-80 p-4 text-left shadow-redefine-flat backdrop-blur-md" role="dialog" aria-label="EXIF" aria-hidden="true">
+		<div class="flex items-center justify-between mb-3">
+			<span class="text-sm font-semibold text-first-text-color">EXIF</span>
+			<button class="image-viewer-exif-close flex h-8 w-8 items-center justify-center rounded-full bg-background-color-transparent-80 text-first-text-color transition hover:bg-background-color-transparent-40" type="button" aria-label="关闭">
+				<i class="fa-solid fa-xmark text-[0.65rem]"></i>
+			</button>
+		</div>
+		<div class="image-viewer-exif-cards grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1 scrollbar-hide"></div>
+		<template class="image-viewer-exif-card-template">
+			<div class="rounded-lg bg-background-color-transparent-40 px-3 py-2">
+				<div class="image-viewer-exif-card-header flex items-center gap-2 mb-1">
+					<i class="image-viewer-exif-card-icon fa-solid fa-circle-info text-xs text-third-text-color"></i>
+					<div class="image-viewer-exif-card-title text-xs font-semibold text-first-text-color"></div>
+				</div>
+				<div class="image-viewer-exif-card-items flex flex-col gap-1"></div>
+			</div>
+		</template>
+	</div>
+	<button class="image-viewer-exif-toggle flex items-center gap-2 hidden absolute left-1/2 bottom-6 -translate-x-1/2 rounded-full border border-border-color bg-background-color-transparent-80 px-4 py-2 text-first-text-color backdrop-blur-md transition hover:bg-background-color-transparent-40" type="button" aria-label="EXIF" aria-expanded="false">
+		<i class="fa-solid fa-circle-info text-xs"></i>
+		<span class="text-xs font-semibold uppercase tracking-wider">EXIF</span>
+	</button>
+	<button class="image-viewer-next" type="button" aria-label="下一页">
+		<i class="fa-solid fa-chevron-right"></i>
+	</button>
+</div>
+
+
+	
+	<div class="search-pop-overlay">
+	<div class="popup search-popup">
+		<div class="search-header">
+			<span class="search-input-field-pre">
+				<i class="fa-solid fa-keyboard"></i>
+			</span>
+			<div class="search-input-container">
+				<input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="站内搜索您需要的内容..." spellcheck="false" type="search" class="search-input">
+			</div>
+			<span class="popup-btn-close">
+				<i class="fa-solid fa-times"></i>
+			</span>
+		</div>
+		<div id="search-result">
+			<div id="no-result">
+				<i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+			</div>
+		</div>
+	</div>
+</div>
+	
+
+</main>
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/Swup.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupSlideTheme.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupScriptsPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupProgressPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupScrollPlugin.min.js" ></script><script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/SwupPreloadPlugin.min.js" ></script>
+<script>
+    window.swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+
+    window.dispatchEvent(
+        new CustomEvent("redefine:swup:ready", {
+            detail: {
+                swup: window.swup,
+            },
+        }),
+    );
+</script>
+
+
+
+
+	<script type="module" src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/main.js" ></script>
+
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/odometer.min.js" ></script>
+    <link rel="stylesheet" href="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/assets/odometer-theme-minimal.css">
+
+
+
+
+
+
+  <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/Typed.min.js" ></script>
+
+
+
+
+
+
+
+
+<script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/moment-with-locales.min.js" data-swup-reload-script></script>
+
+    <script  src="https://evan.beee.top/projects/hexo-theme-redefine@2.9.0/source/js/build/libs/pangu.min.js" ></script>
+
+
+	
+</body>
+
+</html>
